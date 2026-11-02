@@ -6,12 +6,12 @@
 
 window.RO_CONFIG = {
   firebase: {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyA7ZQbP1bQm_cpIT05Ev8AuloarvlTEFdY",
+    authDomain: "ro-party-management.firebaseapp.com",
+    projectId: "ro-party-management",
+    appId: "1:309767215581:web:834704c975daee642ebe34"
   },
 
   // อีเมลผู้ดูแลที่แก้ไขข้อมูลได้ (ต้องตรงกับอีเมลใน firestore.rules ด้วย)
-  adminEmails: ["admin@example.com"]
+  adminEmails: ["kuntapongz.101@gmail.com"]
 };
