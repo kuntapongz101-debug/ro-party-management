@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="โปรแกรมจัดทีมปาร์ตี้ Ragnarok The New World">
+<title>จัดทีมปาร์ตี้ · Ragnarok The New World</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@500;600;700&display=swap">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#e8ecf2; --surface:#ffffff; --surface2:#f1f4f8; --ink:#18212f; --muted:#667388; --line:#d3dae5;
+  --brand:#34517a; --brand-ink:#ffffff; --over:rgba(52,81,122,.14); --danger:#c0392b;
+  --shadow:0 1px 2px rgba(24,33,47,.06),0 6px 18px rgba(24,33,47,.06);
+  --r-tank:#3b82f6; --r-dps:#e5484d; --r-heal:#2fa866; --r-sup:#9b5de5;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10151f; --surface:#192130; --surface2:#222c3e; --ink:#e8edf6; --muted:#96a3b8; --line:#2f3b52;
+    --brand:#7fa3d8; --brand-ink:#0e1522; --over:rgba(127,163,216,.18); --danger:#ff7b6b;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10151f; --surface:#192130; --surface2:#222c3e; --ink:#e8edf6; --muted:#96a3b8; --line:#2f3b52;
+  --brand:#7fa3d8; --brand-ink:#0e1522; --over:rgba(127,163,216,.18); --danger:#ff7b6b;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Noto Sans Thai","Sarabun",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:"Prompt","Noto Sans Thai",system-ui,sans-serif;margin:0;font-weight:600}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-webkit-user-select:none}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1700px;margin:0 auto;padding:14px 16px 4px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:40px;height:40px;border-radius:11px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;font-size:20px;flex:none}
+.brand h1{font-size:19px;line-height:1.2}
+.brand p{margin:0;color:var(--muted);font-size:12px}
+.top-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 12px;font-weight:500;line-height:1.4;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--danger)}
+.btn.sm{padding:3px 9px;font-size:12.5px}
+.icon{border:0;background:transparent;color:var(--muted);border-radius:6px;width:24px;height:24px;display:grid;place-items:center;flex:none;padding:0;font-size:13px}
+.icon:hover{background:var(--surface2);color:var(--ink)}
+
+/* layout */
+.app{display:grid;grid-template-columns:310px minmax(0,1fr);gap:16px;padding:10px 16px 28px;max-width:1700px;margin:0 auto;align-items:start}
+.side{position:sticky;top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;max-height:calc(100vh - 24px - env(safe-area-inset-top,0px));background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);min-height:0}
+.side-head{padding:14px 14px 10px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--line)}
+.side-head h2{font-size:15px;display:flex;justify-content:space-between;align-items:baseline}
+.side-head h2 span{font:500 12px "Noto Sans Thai",sans-serif;color:var(--muted)}
+.addform{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.addform .btn{grid-column:1/-1}
+input[type=text],input[type=search],input[type=email],input[type=password],select,textarea{width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-width:0}
+textarea{resize:vertical;font-size:13px}
+.chk{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:12.5px}
+.chk input{margin:0}
+.row{display:flex;gap:8px;align-items:center}
+.roster-list{overflow:auto;padding:10px;display:flex;flex-direction:column;gap:6px;flex:1;min-height:120px;border-radius:0 0 14px 14px}
+.roster-list.over{background:var(--over);outline:2px dashed var(--brand);outline-offset:-4px}
+.empty-note{color:var(--muted);text-align:center;padding:22px 10px;font-size:13px}
+.side-foot{padding:9px 14px 12px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+
+/* member chip */
+.mem{display:flex;align-items:center;gap:7px;padding:5px 6px 5px 3px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--rc,var(--muted));border-radius:8px;cursor:grab;user-select:none;-webkit-user-select:none;min-width:0;touch-action:pan-y;-webkit-touch-callout:none}
+.mem:hover{border-color:color-mix(in srgb,var(--rc,var(--muted)) 60%,var(--line));border-left-color:var(--rc,var(--muted))}
+.mem.ghosted{opacity:.3}
+.grip{touch-action:none;color:var(--muted);padding:4px 2px;letter-spacing:-3px;font-size:13px;line-height:1;flex:none;cursor:grab}
+.badge{flex:none;width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font:600 11px "Prompt",sans-serif;background:color-mix(in srgb,var(--rc,var(--muted)) 24%,var(--surface));color:var(--ink)}
+.mt{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.mt b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt small{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:10.5px;padding:1px 7px;border-radius:99px;background:var(--over);color:var(--brand);font-weight:600;flex:none}
+.badge.has-img{width:34px;height:34px;background:transparent;border-radius:0}
+.badge img{width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+.jic{width:38px;height:38px;border:1.5px dashed var(--line);border-radius:8px;display:grid;place-items:center;cursor:pointer;color:var(--muted);overflow:hidden;background:var(--surface2)}
+.jic:hover{border-color:var(--brand)}
+.jic img{width:100%;height:100%;object-fit:contain}
+.mem .x{opacity:.55}
+.mem .x:hover{opacity:1;color:var(--danger)}
+.drag-ghost{position:fixed;z-index:1000;pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.28);transform:rotate(2deg);background:var(--surface)}
+
+/* tabs */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:thin}
+.tab{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;font-weight:500;border-bottom:3px solid var(--tc)}
+.tab small{color:var(--muted);font-weight:400}
+.tab.on{background:var(--ink);color:var(--bg);border-color:var(--ink);border-bottom-color:var(--tc)}
+.tab.on small{color:inherit;opacity:.7}
+.tab.add{border-style:dashed;color:var(--muted);border-bottom-width:1px}
+
+/* team */
+.team-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--act);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+.th-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;flex:1}
+.act-ico{font-size:24px;line-height:1}
+.tname{font:600 18px "Prompt","Noto Sans Thai",sans-serif;background:transparent;border:1px solid transparent;border-radius:8px;padding:3px 8px;width:min(240px,100%)}
+.tname:hover,.tname:focus{border-color:var(--line);background:var(--surface2)}
+.actsel{width:auto;min-width:150px;font-weight:500}
+.th-right{display:flex;gap:6px;flex-wrap:wrap}
+.stats{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:12px 2px}
+.meter{flex:1 1 180px;min-width:150px;max-width:340px}
+.meter .lbl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:3px}
+.meter .lbl b{color:var(--ink)}
+.bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--act);border-radius:99px;transition:width .2s}
+.rolechips{display:flex;gap:6px;flex-wrap:wrap}
+.rc{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;padding:2px 9px;border-radius:99px;background:var(--surface);border:1px solid var(--line)}
+.rc i{width:9px;height:9px;border-radius:50%}
+
+.parties{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.party{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--act);border-radius:12px;padding:9px 9px 10px;box-shadow:var(--shadow)}
+.party.full{border-top-color:var(--r-heal)}
+.party>header{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.pname{font:600 14px "Prompt","Noto Sans Thai",sans-serif;background:transparent;border:1px solid transparent;border-radius:6px;padding:2px 6px;flex:1;min-width:0}
+.pname:hover,.pname:focus{border-color:var(--line);background:var(--surface2)}
+.dots{display:flex;gap:2px}
+.dots i{width:7px;height:7px;border-radius:50%}
+.cnt{font-size:12px;color:var(--muted);font-weight:600;min-width:28px;text-align:right}
+.party.full .cnt{color:var(--r-heal)}
+.slots{display:flex;flex-direction:column;gap:5px}
+.slot{display:flex;align-items:center;gap:5px;border-radius:9px;padding:1px;min-height:42px}
+.slot .no{width:18px;text-align:center;font-size:11px;color:var(--muted);flex:none}
+.crown{width:22px;height:22px;flex:none;border:0;background:transparent;border-radius:6px;padding:0;font-size:14px;line-height:1;filter:grayscale(1);opacity:.35}
+.crown:hover{opacity:.9;background:var(--surface2)}
+.crown.on{filter:none;opacity:1}
+.slot.is-head .mem{box-shadow:0 0 0 1.5px #d9a026;background:color-mix(in srgb,#d9a026 12%,var(--surface))}
+.phead{font-size:12.5px;margin:0 0 7px;padding:3px 8px;border-radius:7px;background:color-mix(in srgb,#d9a026 18%,var(--surface))}
+.phead.none{background:transparent;color:var(--muted);padding-left:2px}
+.slot .mem{flex:1}
+.empty{flex:1;height:40px;border:1.5px dashed var(--line);background:transparent;color:var(--muted);border-radius:8px;font-size:12.5px}
+.empty:hover{border-color:var(--brand);color:var(--brand);background:var(--over)}
+.over{background:var(--over);outline:2px dashed var(--brand);outline-offset:1px}
+.party.over{outline-offset:2px}
+
+.reserve{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow);border-left:5px solid var(--muted)}
+.reserve>header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.reserve h3{font-size:14.5px}
+.reserve h3 small{font:400 12px "Noto Sans Thai",sans-serif;color:var(--muted);margin-left:6px}
+.res-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+.res-empty{color:var(--muted);font-size:13px;padding:8px 2px}
+
+/* modal + toast */
+.overlay{position:fixed;inset:0;z-index:500;background:rgba(10,14,22,.55);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.overlay[hidden]{display:none}
+.dlg{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:min(520px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.dlg h3{padding:16px 18px 6px;font-size:17px}
+.dlg-body{padding:8px 18px 12px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.dlg-foot{display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 16px;flex-wrap:wrap}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.help{font-size:12.5px;color:var(--muted);margin:0}
+.pick-list{display:flex;flex-direction:column;gap:5px;max-height:48vh;overflow:auto}
+.pick-item{text-align:left;background:transparent;border:0;padding:0;border-radius:8px}
+.pick-item .mem{cursor:pointer}
+.pick-item:hover .mem{background:var(--surface2)}
+.jrow{display:grid;grid-template-columns:38px 1fr 112px 34px 30px;gap:6px;align-items:center}
+.jcol{width:34px;height:34px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);cursor:pointer}
+.arow{display:grid;grid-template-columns:60px 1fr 30px;gap:6px;align-items:center}
+.arow .ai{text-align:center}
+.dsec{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
+.dsec .help{margin:0}
+.who{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap;margin-right:4px}
+.who .pill{padding:3px 10px;border-radius:99px;font-weight:600;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.who .pill.adm{background:color-mix(in srgb,#d9a026 22%,var(--surface))}
+.ro-only{display:none}
+.ro .ro-only{display:inline}
+.ro .adm-only{display:none!important}
+.ro .addform,.ro [data-act="bulk"],.ro [data-act="editmem"],.ro [data-act="rmslot"],.ro [data-act="rmres"],.ro [data-act="pickres"],.ro [data-act="dupteam"],.ro [data-act="clearteam"],.ro [data-act="delteam"],.ro [data-act="newteam"],.ro [data-act="jobs"],.ro .grip{display:none!important}
+.ro .crown{pointer-events:none}
+.ro .crown:not(.on){visibility:hidden}
+.ro .mem{cursor:default}
+.ro .empty{pointer-events:none;border-style:dotted}
+.ro .tname,.ro .pname{pointer-events:none}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:900;max-width:90vw;text-align:center;font-weight:500}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;max-height:none}
+  .roster-list{max-height:290px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">⚔️</div>
+    <div>
+      <h1>จัดทีมปาร์ตี้</h1>
+      <p>Ragnarok: The New World · 1 ปาร์ตี้ 5 คน · 1 ทีมสูงสุด 8 ปาร์ตี้</p>
+    </div>
+  </div>
+  <div class="top-actions"><div class="who" id="who"></div>
+    <button class="btn" data-act="jobs">จัดการอาชีพ</button>
+    <button class="btn" data-act="data">ส่งออก/นำเข้า</button>
+    <button class="btn" data-act="theme" aria-label="สลับโหมดสว่าง/มืด">สลับธีม</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="side">
+    <div class="side-head">
+      <h2>รายชื่อสมาชิก <span id="rcount"></span></h2>
+      <div class="addform">
+        <input type="text" id="nm" placeholder="ชื่อในเกม" maxlength="24" autocomplete="off" aria-label="ชื่อในเกม">
+        <select id="jb" aria-label="อาชีพ"></select>
+        <button class="btn primary" data-act="addmem">เพิ่มสมาชิก</button>
+      </div>
+      <div class="row">
+        <button class="btn sm" data-act="bulk">เพิ่มหลายคนพร้อมกัน</button>
+      </div>
+      <input type="search" id="q" placeholder="ค้นหาชื่อหรืออาชีพ" aria-label="ค้นหา">
+      <label class="chk"><input type="checkbox" id="hide"> ซ่อนคนที่อยู่ในทีมนี้แล้ว</label>
+    </div>
+    <div class="roster-list" id="roster" data-drop="roster"></div>
+    <div class="side-foot"><span class="adm-only">ลากชื่อไปวางในช่องปาร์ตี้หรือสำรอง · ลากกลับมาที่นี่เพื่อนำออกจากทีม</span><span class="ro-only">โหมดดูอย่างเดียว · เฉพาะผู้ดูแลแก้ไขได้</span></div>
+  </aside>
+
+  <main id="main"></main>
+</div>
+
+<div id="gate" class="overlay" style="z-index:700"><div class="dlg"><h3>กำลังเชื่อมต่อฐานข้อมูล…</h3><div class="dlg-body"><p class="help">กำลังโหลดข้อมูลทีม</p></div></div></div>
+<div id="modal" class="overlay" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants ---------- */
+const PS = 5, NP = 8, MAXRES = 10;
+const SIZES = [5,10,15,20,25,30,35,40];
+const KEY = 'ro-tnw-party-v1', THEME_KEY = 'ro-tnw-theme';
+const ROLES = {
+  tank:{l:'แทงค์',c:'var(--r-tank)'},
+  dps:{l:'ดาเมจ',c:'var(--r-dps)'},
+  heal:{l:'ฮีลเลอร์',c:'var(--r-heal)'},
+  sup:{l:'ซัพพอร์ต',c:'var(--r-sup)'},
+  other:{l:'อื่นๆ',c:'var(--muted)'}
+};
+const ROLE_ORDER = ['tank','dps','heal','sup','other'];
+const DEFAULT_JOBS = [
+  ['Knight','dps'],['Crusader','tank'],['Wizard','dps'],['Sage','sup'],['Hunter','dps'],['Bard','sup'],['Dancer','sup'],
+  ['Priest','heal'],['Monk','dps'],['Assassin','dps'],['Rogue','dps'],['Blacksmith','dps'],['Alchemist','sup'],
+  ['Rebel','dps'],['คานอส','other']
+];
+const JOBS_VERSION = 2;
+// แปลงอาชีพเก่า (รุ่นก่อนหน้า) เป็นอาชีพใหม่ตอนอัปเดต
+const JM = {'Royal Guard':'Crusader','Rune Knight':'Knight','Arch Bishop':'Priest','Warlock':'Wizard','Ranger':'Hunter','Minstrel':'Bard','Guillotine Cross':'Assassin','Sorcerer':'Sage','Sura':'Monk','Shadow Chaser':'Rogue','Genetic':'Alchemist','Wanderer':'Dancer','Mechanic':'Blacksmith'};
+const ACT_COLORS = ['#e2703a','#22a6c4','#8b6cf0','#e0509a','#3fae6a','#d9a026','#5b8def'];
+const DEFAULT_ACTS = [
+  {name:'Guild League',icon:'⚔️'},
+  {name:'Polarity',icon:'🌀'},
+  {name:'ชิงปราสาท',icon:'🏰'}
+];
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-3);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const newParty = i => ({name:'ปาร์ตี้ '+(i+1), slots:Array(PS).fill(null)});
+const newTeam = (name, activity) => ({id:uid(), name, activity, size:PS*NP, parties:Array.from({length:NP},(_,i)=>newParty(i)), reserves:[]});
+
+/* ---------- state ---------- */
+let state = blankState();
+let canEdit = false;
+let ui = {q:'', hide:false};
+let byId = {};
+
+function seed(){
+  const jobs = DEFAULT_JOBS.map(([name,role])=>({name,role}));
+  const raw = [
+    ['Aomsin','Royal Guard'],['Bank','Rune Knight'],['Cream','Arch Bishop'],['Dew','Warlock'],['Earth','Ranger'],
+    ['Fern','Minstrel'],['Gun','Guillotine Cross'],['Honey','Arch Bishop'],['Ice','Sorcerer'],['Jazz','Sura'],
+    ['Kong','Royal Guard'],['Lalita','Shadow Chaser'],['Mook','Genetic'],['Namtan','Wanderer'],['Oat','Mechanic'],['Pang','Warlock']
+  ];
+  const members = raw.map(([name,job])=>({id:uid(),name,job:JM[job]||job}));
+  const a = newTeam('ทีม A','Guild League');
+  const b = newTeam('ทีม B','ชิงปราสาท');
+  [0,1,2,3,4].forEach(i=>a.parties[0].slots[i]=members[i].id);
+  [5,6,7].forEach((m,i)=>a.parties[1].slots[i]=members[m].id);
+  a.reserves=[members[15].id];
+  return {members,jobs,activities:DEFAULT_ACTS.map(x=>({...x})),teams:[a,b],active:a.id};
+}
+function sanitize(s){
+  const freshJobs = DEFAULT_JOBS.map(([name,role])=>({name,role}));
+  if(s.jv !== JOBS_VERSION){
+    s.jobs = freshJobs; s.jv = JOBS_VERSION;
+    s.members.forEach(m=>{ if(JM[m.job]) m.job = JM[m.job]; });
+  } else s.jobs = (Array.isArray(s.jobs)&&s.jobs.length) ? s.jobs : freshJobs;
+  s.activities = (Array.isArray(s.activities)&&s.activities.length) ? s.activities : DEFAULT_ACTS.map(x=>({...x}));
+  const ids = new Set(s.members.map(m=>m.id));
+  s.teams.forEach(t=>{
+    if(!t.id) t.id = uid();
+    t.size = (Number.isInteger(t.size) && t.size>=PS && t.size<=PS*NP && t.size%PS===0) ? t.size : PS*NP;
+    t.parties = (t.parties||[]).slice(0,NP);
+    while(t.parties.length<NP) t.parties.push(newParty(t.parties.length));
+    const seen = new Set();
+    t.parties.forEach(pt=>{
+      pt.slots = (pt.slots||[]).slice(0,PS).map(id=>(ids.has(id)&&!seen.has(id)&&seen.add(id))?id:null);
+      while(pt.slots.length<PS) pt.slots.push(null);
+    });
+    t.reserves = (t.reserves||[]).filter(id=>ids.has(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAXRES);
+    if(!s.activities.some(a=>a.name===t.activity)) s.activities.push({name:t.activity||'อื่นๆ',icon:'⭐'});
+  });
+  if(!s.teams.find(t=>t.id===s.active)) s.active = s.teams[0].id;
+  return s;
+}
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if(s && Array.isArray(s.members) && Array.isArray(s.teams) && s.teams.length) return sanitize(s);
+  }catch(e){}
+  return seed();
+}
+function save(){
+  if(!canEdit || !cloud.ready) return;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}   // local copy (primary in single-device mode, backup otherwise)
+  if(cloud.mode!=='firebase') return;
+  clearTimeout(cloud.saveTimer);
+  cloud.saveTimer = setTimeout(flush, 350);
+  setSync('กำลังบันทึก…');
+}
+
+/* ---------- lookups ---------- */
+const team = () => state.teams.find(t=>t.id===state.active) || state.teams[0];
+const roleOf = job => (state.jobs.find(j=>j.name===job)||{}).role || 'other';
+const actOf = name => state.activities.find(a=>a.name===name) || {name,icon:'⭐'};
+const actColor = name => { const i = state.activities.findIndex(a=>a.name===name); return ACT_COLORS[(i<0?0:i)%ACT_COLORS.length]; };
+const ROLE_HEX = {tank:'#3b82f6', dps:'#e5484d', heal:'#2fa866', sup:'#9b5de5', other:'#8a94a6'};
+function colorOf(job){
+  const j = state.jobs.find(x=>x.name===job);
+  if(j && typeof j.color==='string' && /^#[0-9a-f]{6}$/i.test(j.color)) return j.color;
+  return ROLES[roleOf(job)].c;
+}
+function jobColorValue(j){
+  return (j.color && /^#[0-9a-f]{6}$/i.test(j.color)) ? j.color : (ROLE_HEX[j.role] || ROLE_HEX.other);
+}
+function iconOf(job){
+  const j = state.jobs.find(x=>x.name===job);
+  return (j && typeof j.icon==='string' && /^data:image\//.test(j.icon)) ? j.icon : '';
+}
+function abbr(job){
+  const w = String(job).trim().split(/\s+/);
+  if(w.length>1) return (w[0][0]+w[1][0]).toUpperCase();
+  const s = w[0]||'?';
+  return /^[\x00-\x7f]+$/.test(s) ? s[0].toUpperCase()+(s[1]||'').toLowerCase() : s.slice(0,2);
+}
+function teamIds(t){
+  const a = [];
+  t.parties.forEach(p=>p.slots.forEach(id=>id&&a.push(id)));
+  return a.concat(t.reserves);
+}
+function locate(t, mid){
+  for(let p=0;p<t.parties.length;p++){
+    const i = t.parties[p].slots.indexOf(mid);
+    if(i>=0) return {k:'slot',p,i};
+  }
+  const r = t.reserves.indexOf(mid);
+  return r>=0 ? {k:'reserve',i:r} : null;
+}
+function clearLoc(t, loc){
+  if(loc.k==='slot') t.parties[loc.p].slots[loc.i] = null;
+  else t.reserves.splice(loc.i,1);
+}
+
+/* ---------- toast & modal ---------- */
+let toastTimer;
+function toast(msg){
+  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 2400);
+}
+function modal({title, html='', buttons=[{label:'ปิด'}], onOpen}){
+  const ov = $('#modal');
+  ov.innerHTML = '<div class="dlg" role="dialog" aria-modal="true"><h3></h3><div class="dlg-body"></div><div class="dlg-foot"></div></div>';
+  ov.querySelector('h3').textContent = title;
+  ov.querySelector('.dlg-body').innerHTML = html;
+  const foot = ov.querySelector('.dlg-foot');
+  buttons.forEach(b=>{
+    const el = document.createElement('button');
+    el.className = 'btn ' + (b.cls||'');
+    el.textContent = b.label;
+    el.addEventListener('click', ()=>{
+      if(b.fn && b.fn()===false) return;
+      closeModal();
+    });
+    foot.appendChild(el);
+  });
+  ov.hidden = false;
+  if(onOpen) onOpen(ov);
+}
+function closeModal(){ const ov=$('#modal'); ov.hidden=true; ov.innerHTML=''; }
+$('#modal').addEventListener('mousedown', e=>{ if(e.target.id==='modal') closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#modal').hidden) closeModal(); });
+function confirmBox(msg, okLabel, fn){
+  modal({title:'ยืนยันการทำรายการ', html:'<p class="help" style="font-size:14px;color:var(--ink)">'+esc(msg)+'</p>',
+    buttons:[{label:'ยกเลิก'},{label:okLabel,cls:'danger',fn:()=>{fn();}}]});
+}
+
+/* ---------- job options ---------- */
+function jobOptions(sel){
+  let h = '';
+  ROLE_ORDER.forEach(r=>{
+    const js = state.jobs.filter(j=>(ROLES[j.role]?j.role:'other')===r);
+    if(!js.length) return;
+    h += '<optgroup label="'+esc(ROLES[r].l)+'">' + js.map(j=>'<option value="'+esc(j.name)+'"'+(j.name===sel?' selected':'')+'>'+esc(j.name)+'</option>').join('') + '</optgroup>';
+  });
+  if(sel && !state.jobs.some(j=>j.name===sel)) h += '<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>';
+  return h;
+}
+
+/* ---------- rendering ---------- */
+function chip(m, kind, extra){
+  const r = ROLES[roleOf(m.job)];
+  return '<div class="mem" data-drag="'+kind+'" data-mid="'+m.id+'" style="--rc:'+colorOf(m.job)+'" title="'+esc(m.name)+' · '+esc(m.job)+' · '+r.l+'">'
+    + '<span class="grip" aria-hidden="true">⋮⋮</span>'
+    + (iconOf(m.job) ? '<span class="badge has-img"><img src="'+esc(iconOf(m.job))+'" alt="" draggable="false"></span>' : '<span class="badge">'+esc(abbr(m.job))+'</span>')
+    + '<span class="mt"><b>'+esc(m.name)+'</b><small>'+esc(m.job)+'</small></span>'
+    + (extra||'') + '</div>';
+}
+
+function renderTabs(){
+  const tabs = state.teams.map(t=>{
+    const n = t.parties.reduce((a,p)=>a+p.slots.filter(Boolean).length,0);
+    return '<button class="tab'+(t.id===state.active?' on':'')+'" data-act="tab" data-id="'+t.id+'" style="--tc:'+actColor(t.activity)+'">'
+      + '<span>'+esc(actOf(t.activity).icon)+'</span><span>'+esc(t.name)+'</span><small>'+n+'/'+t.size+'</small></button>';
+  }).join('');
+  return '<nav class="tabs" aria-label="ทีม">'+tabs+'<button class="tab add" data-act="newteam">＋ ทีมใหม่</button></nav>';
+}
+
+function partyHtml(pt, p, byId){
+  const ms = pt.slots.map(id=>id?byId[id]:null);
+  const head = (pt.head && pt.slots.includes(pt.head) && byId[pt.head]) ? pt.head : null;
+  const n = ms.filter(Boolean).length;
+  const dots = ms.filter(Boolean).map(m=>'<i style="background:'+colorOf(m.job)+'"></i>').join('');
+  const slots = pt.slots.map((id,i)=>{
+    const m = ms[i];
+    const inner = m
+      ? chip(m,'slot','<button class="icon x" data-act="rmslot" data-p="'+p+'" data-i="'+i+'" title="นำออกจากปาร์ตี้" aria-label="นำออก">✕</button>')
+      : (canEdit ? '<button class="empty" data-act="pick" data-p="'+p+'" data-i="'+i+'">＋ เลือกสมาชิก</button>' : '<div class="empty" style="display:grid;place-items:center">ว่าง</div>');
+    return '<div class="slot'+(m&&m.id===head?' is-head':'')+'" data-drop="slot" data-p="'+p+'" data-i="'+i+'">'
+      + (m ? '<button class="crown'+(m.id===head?' on':'')+'" data-act="head" data-p="'+p+'" data-i="'+i+'" title="'+(m.id===head?'เป็นหัวหน้าปาร์ตี้ (กดเพื่อยกเลิก)':'ตั้งเป็นหัวหน้าปาร์ตี้ (คนตั้ง)')+'" aria-label="ตั้งเป็นหัวหน้าปาร์ตี้">👑</button>' : '<span class="no" style="width:22px">'+(i+1)+'</span>')
+      + inner + '</div>';
+  }).join('');
+  return '<section class="party'+(n===PS?' full':'')+'" data-drop="party" data-p="'+p+'">'
+    + '<header><input class="pname" data-act="pname" data-p="'+p+'" value="'+esc(pt.name)+'" maxlength="24" aria-label="ชื่อปาร์ตี้">'
+    + '<span class="dots">'+dots+'</span><span class="cnt">'+n+'/'+PS+'</span></header>'
+    + '<div class="phead'+(head?'':' none')+'">'+(head?'👑 หัวหน้าปาร์ตี้ (คนตั้ง): <b>'+esc(byId[head].name)+'</b>':'ยังไม่ได้เลือกคนตั้งปาร์ตี้ · กด 👑 หน้าชื่อสมาชิก')+'</div>'
+    + '<div class="slots">'+slots+'</div></section>';
+}
+
+function renderMain(){
+  const t = team();
+  const act = actOf(t.activity);
+  const placed = [];
+  t.parties.forEach(p=>p.slots.forEach(id=>id&&byId[id]&&placed.push(byId[id])));
+  const total = t.size;
+  const rc = {};
+  placed.forEach(m=>{ const r=roleOf(m.job); rc[r]=(rc[r]||0)+1; });
+  const roleChips = ROLE_ORDER.filter(r=>rc[r]).map(r=>'<span class="rc"><i style="background:'+ROLES[r].c+'"></i>'+ROLES[r].l+' <b>'+rc[r]+'</b></span>').join('');
+
+  const actOpts = state.activities.map(a=>'<option value="'+esc(a.name)+'"'+(a.name===t.activity?' selected':'')+'>'+esc(a.icon+' '+a.name)+'</option>').join('')
+    + '<option value="__new">＋ เพิ่มกิจกรรมใหม่…</option>';
+
+  const reserveHtml = t.reserves.length
+    ? '<div class="res-list">'+t.reserves.map(id=>byId[id]?chip(byId[id],'reserve','<button class="icon x" data-act="rmres" data-mid="'+id+'" title="นำออกจากสำรอง" aria-label="นำออก">✕</button>'):'').join('')+'</div>'
+    : '<div class="res-empty">ยังไม่มีรายชื่อสำรอง · ลากสมาชิกมาวางที่นี่ได้เลย</div>';
+
+  $('#main').innerHTML =
+    renderTabs()
+    + '<div style="--act:'+actColor(t.activity)+'">'
+    + '<div class="team-head"><div class="th-left"><span class="act-ico">'+esc(act.icon)+'</span>'
+    + '<input class="tname" data-act="tname" value="'+esc(t.name)+'" maxlength="30" aria-label="ชื่อทีม">'
+    + '<select class="actsel" data-act="tact" aria-label="กิจกรรม">'+actOpts+'</select>'
+    + '<select class="actsel" data-act="tsize" aria-label="ขนาดทีม">'+SIZES.map(s=>'<option value="'+s+'"'+(s===t.size?' selected':'')+'>'+s+' คน ('+(s/PS)+' ปาร์ตี้)</option>').join('')+'</select></div>'
+    + '<div class="th-right"><button class="btn sm" data-act="acts">จัดการกิจกรรม</button><button class="btn sm" data-act="export">คัดลอกรายชื่อ</button><button class="btn sm" data-act="dupteam">ทำสำเนาทีม</button><button class="btn sm" data-act="clearteam">ล้างทีม</button><button class="btn sm danger" data-act="delteam">ลบทีม</button></div></div>'
+    + '<div class="stats"><div class="meter"><div class="lbl"><span>ตัวจริงในทีม</span><b>'+placed.length+' / '+total+'</b></div><div class="bar"><i style="width:'+(placed.length/total*100)+'%"></i></div></div>'
+    + '<div class="rolechips">'+(roleChips||'<span class="help">ยังไม่มีสมาชิกในปาร์ตี้</span>')+'</div></div>'
+    + '<div class="parties">'+t.parties.slice(0,t.size/PS).map((pt,p)=>partyHtml(pt,p,byId)).join('')+'</div>'
+    + '<section class="reserve" data-drop="reserve"><header><h3>รายชื่อสำรอง <small>'+t.reserves.length+'/'+MAXRES+' · เผื่อมีคนไม่มา</small></h3>'
+    + '<button class="btn sm" data-act="pickres">＋ เพิ่มสำรอง</button></header>'+reserveHtml+'</section></div>';
+  if(!canEdit){
+    $('#main').querySelectorAll('input').forEach(i=>{ i.readOnly = true; });
+    $('#main').querySelectorAll('select').forEach(s=>{ s.disabled = true; });
+  }
+}
+
+function renderRoster(){
+  const t = team();
+  const inTeam = new Set(teamIds(t));
+  const q = ui.q.trim().toLowerCase();
+  const list = state.members.filter(m=>{
+    if(ui.hide && inTeam.has(m.id)) return false;
+    return !q || m.name.toLowerCase().includes(q) || m.job.toLowerCase().includes(q);
+  });
+  $('#rcount').textContent = state.members.length + ' คน';
+  $('#roster').innerHTML = list.length
+    ? list.map(m=>chip(m,'roster',(inTeam.has(m.id)?'<span class="tag">ในทีม</span>':'')+'<button class="icon" data-act="editmem" data-mid="'+m.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>')).join('')
+    : '<div class="empty-note">'+(state.members.length?'ไม่พบสมาชิกที่ตรงกับตัวกรอง':'ยังไม่มีสมาชิก · เพิ่มชื่อและอาชีพด้านบนได้เลย')+'</div>';
+}
+
+function render(){
+  byId = {}; state.members.forEach(m=>byId[m.id]=m);
+  const sel = $('#jb'), keep = sel.value;
+  sel.innerHTML = jobOptions(keep || (state.jobs[0]||{}).name);
+  renderRoster();
+  renderMain();
+  save();
+}
+
+/* ---------- placing members ---------- */
+function drop(mid, target){
+  const t = team();
+  const cur = locate(t, mid);
+
+  if(target.type==='roster'){
+    if(cur){ clearLoc(t,cur); toast('นำ '+byId[mid].name+' ออกจากทีมแล้ว'); }
+    return true;
+  }
+  if(target.type==='reserve'){
+    if(cur && cur.k==='reserve') return false;
+    if(t.reserves.length>=MAXRES){ toast('รายชื่อสำรองเต็มแล้ว (สูงสุด '+MAXRES+' คน)'); return false; }
+    if(cur) clearLoc(t,cur);
+    t.reserves.push(mid);
+    return true;
+  }
+  if(target.type==='party'){
+    const pt = t.parties[target.p];
+    const i = pt.slots.indexOf(null);
+    if(i<0){ toast(pt.name+' เต็มแล้ว · วางทับช่องที่ต้องการเพื่อสลับตำแหน่ง'); return false; }
+    target = {type:'slot',p:target.p,i};
+  }
+  // slot
+  const slots = t.parties[target.p].slots;
+  const occ = slots[target.i];
+  if(occ===mid) return false;
+  if(cur){
+    if(occ){
+      if(cur.k==='slot') t.parties[cur.p].slots[cur.i] = occ; else t.reserves[cur.i] = occ;
+    } else clearLoc(t,cur);
+  } else if(occ){
+    if(t.reserves.length<MAXRES){ t.reserves.push(occ); toast(byId[occ].name+' ถูกย้ายไปรายชื่อสำรอง'); }
+    else toast(byId[occ].name+' ถูกนำออกจากทีม');
+  }
+  slots[target.i] = mid;
+  return true;
+}
+
+/* ---------- drag & drop (pointer events: mouse + touch) ---------- */
+let drag = null;
+function targetAt(x,y){
+  const el = document.elementFromPoint(x,y);
+  const d = el && el.closest('[data-drop]');
+  if(!d) return null;
+  const k = d.dataset.drop;
+  if(k==='slot') return {type:'slot',p:+d.dataset.p,i:+d.dataset.i,el:d};
+  if(k==='party') return {type:'party',p:+d.dataset.p,el:d};
+  return {type:k,el:d};
+}
+function clearOver(){ document.querySelectorAll('.over').forEach(e=>e.classList.remove('over')); }
+function endDrag(){
+  if(!drag) return;
+  clearInterval(drag.timer);
+  if(drag.ghost) drag.ghost.remove();
+  if(drag.srcEl) drag.srcEl.classList.remove('ghosted');
+  document.body.classList.remove('is-dragging');
+  clearOver();
+  drag = null;
+}
+document.addEventListener('pointerdown', e=>{
+  if(drag) return;
+  if(!canEdit) return;
+  const el = e.target.closest('[data-drag]');
+  if(!el || e.target.closest('button,input,select,textarea')) return;
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  if(e.pointerType!=='mouse' && !e.target.closest('.grip')) return;
+  drag = {mid:el.dataset.mid, src:el.dataset.drag, srcEl:el, x0:e.clientX, y0:e.clientY, x:e.clientX, y:e.clientY, active:false, ghost:null, timer:null};
+});
+document.addEventListener('pointermove', e=>{
+  if(!drag) return;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if(!drag.active){
+    if(Math.hypot(e.clientX-drag.x0, e.clientY-drag.y0) < 6) return;
+    drag.active = true;
+    const r = drag.srcEl.getBoundingClientRect();
+    drag.dx = drag.x0 - r.left; drag.dy = drag.y0 - r.top;
+    const g = drag.srcEl.cloneNode(true);
+    g.classList.add('drag-ghost'); g.classList.remove('ghosted');
+    g.style.width = r.width+'px';
+    document.body.appendChild(g);
+    drag.ghost = g;
+    drag.srcEl.classList.add('ghosted');
+    document.body.classList.add('is-dragging');
+    drag.timer = setInterval(()=>{
+      if(!drag) return;
+      if(drag.y < 80) window.scrollBy(0,-16);
+      else if(drag.y > window.innerHeight-80) window.scrollBy(0,16);
+    }, 16);
+  }
+  e.preventDefault();
+  drag.ghost.style.left = (e.clientX-drag.dx)+'px';
+  drag.ghost.style.top = (e.clientY-drag.dy)+'px';
+  clearOver();
+  const tg = targetAt(e.clientX, e.clientY);
+  if(tg && !(tg.type==='roster' && drag.src==='roster')) tg.el.classList.add('over');
+}, {passive:false});
+document.addEventListener('pointerup', e=>{
+  if(!drag) return;
+  if(drag.active){
+    const tg = targetAt(e.clientX, e.clientY);
+    const mid = drag.mid, src = drag.src;
+    endDrag();
+    if(tg && !(tg.type==='roster' && src==='roster')){
+      drop(mid, tg);
+      render();
+    }
+  } else endDrag();
+});
+document.addEventListener('pointercancel', endDrag);
+document.addEventListener('dragstart', e=>{ if(e.target.closest && e.target.closest('.mem')) e.preventDefault(); });
+
+/* ---------- modals: members ---------- */
+function addMember(){
+  if(!canEdit) return;
+  const nm = $('#nm'), name = nm.value.trim();
+  if(!name){ toast('กรอกชื่อในเกมก่อน'); nm.focus(); return; }
+  state.members.push({id:uid(), name, job:$('#jb').value});
+  nm.value = ''; nm.focus();
+  render();
+}
+function editMember(mid){
+  const m = byId[mid]; if(!m) return;
+  modal({title:'แก้ไขสมาชิก',
+    html:'<label class="fld">ชื่อในเกม<input type="text" id="em-n" maxlength="24" value="'+esc(m.name)+'"></label>'
+      +'<label class="fld">อาชีพ<select id="em-j">'+jobOptions(m.job)+'</select></label>',
+    buttons:[
+      {label:'ลบสมาชิก',cls:'danger',fn:()=>{
+        state.members = state.members.filter(x=>x.id!==mid);
+        state.teams.forEach(t=>{ t.parties.forEach(p=>p.slots=p.slots.map(id=>id===mid?null:id)); t.reserves=t.reserves.filter(id=>id!==mid); });
+        render(); toast('ลบ '+m.name+' แล้ว');
+      }},
+      {label:'ยกเลิก'},
+      {label:'บันทึก',cls:'primary',fn:()=>{
+        const n = $('#em-n').value.trim();
+        if(!n){ toast('ชื่อต้องไม่ว่าง'); return false; }
+        m.name = n; m.job = $('#em-j').value; render();
+      }}
+    ],
+    onOpen:()=>$('#em-n').focus()});
+}
+function bulkAdd(){
+  modal({title:'เพิ่มหลายคนพร้อมกัน',
+    html:'<p class="help">พิมพ์ 1 บรรทัดต่อ 1 คน ในรูปแบบ <b>ชื่อ, อาชีพ</b> เช่น<br>Bank, Rune Knight<br>Cream, Arch Bishop</p><textarea id="bk" rows="9" placeholder="ชื่อ, อาชีพ"></textarea>',
+    buttons:[{label:'ยกเลิก'},{label:'เพิ่มทั้งหมด',cls:'primary',fn:()=>{
+      const lines = $('#bk').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      let n = 0;
+      lines.forEach(line=>{
+        let name, job;
+        const m = line.split(/[,\t|]/);
+        if(m.length>=2){ name = m[0].trim(); job = m.slice(1).join(' ').trim(); }
+        else {
+          const hit = state.jobs.find(j=>line.toLowerCase().endsWith(j.name.toLowerCase()));
+          if(hit){ job = hit.name; name = line.slice(0,line.length-hit.name.length).trim(); }
+          else { name = line; job = ''; }
+        }
+        if(!name) return;
+        const found = state.jobs.find(j=>j.name.toLowerCase()===job.toLowerCase());
+        state.members.push({id:uid(), name:name.slice(0,24), job:found?found.name:(job||(state.jobs[0]||{}).name||'')});
+        n++;
+      });
+      if(!n){ toast('ไม่พบรายชื่อที่เพิ่มได้'); return false; }
+      render(); toast('เพิ่มสมาชิก '+n+' คนแล้ว');
+    }}],
+    onOpen:()=>$('#bk').focus()});
+}
+function openPick(target){
+  const t = team(), inTeam = new Set(teamIds(t));
+  const title = target.type==='reserve' ? 'เลือกสมาชิกเข้ารายชื่อสำรอง' : 'เลือกสมาชิกเข้า '+t.parties[target.p].name+' ช่อง '+(target.i+1);
+  modal({title, html:'<input type="search" id="pq" placeholder="ค้นหาชื่อหรืออาชีพ"><div class="pick-list" id="pl"></div>',
+    buttons:[{label:'ปิด'}],
+    onOpen:()=>{
+      const draw = ()=>{
+        const q = $('#pq').value.trim().toLowerCase();
+        const ms = state.members.filter(m=>!inTeam.has(m.id) && (!q || m.name.toLowerCase().includes(q) || m.job.toLowerCase().includes(q)));
+        $('#pl').innerHTML = ms.length ? ms.map(m=>'<button class="pick-item" data-pick="'+m.id+'">'+chip(m,'pick').replace(' data-drag="pick"','')+'</button>').join('')
+          : '<div class="empty-note">ไม่มีสมาชิกที่ยังไม่อยู่ในทีมนี้</div>';
+      };
+      draw();
+      $('#pq').addEventListener('input', draw);
+      $('#pl').addEventListener('click', e=>{
+        const b = e.target.closest('[data-pick]'); if(!b) return;
+        if(drop(b.dataset.pick, target)){ closeModal(); render(); }
+      });
+      $('#pq').focus();
+    }});
+}
+
+/* ---------- modals: teams ---------- */
+function actSelectOptions(sel){ return state.activities.map(a=>'<option value="'+esc(a.name)+'"'+(a.name===sel?' selected':'')+'>'+esc(a.icon+' '+a.name)+'</option>').join(''); }
+function newTeamModal(){
+  modal({title:'สร้างทีมใหม่',
+    html:'<label class="fld">ชื่อทีม<input type="text" id="nt-n" maxlength="30" value="ทีม '+String.fromCharCode(65+Math.min(state.teams.length,25))+'"></label>'
+      +'<label class="fld">กิจกรรม<select id="nt-a">'+actSelectOptions('')+'</select></label>'
+      +'<label class="fld">ขนาดทีม<select id="nt-s">'+SIZES.map(s=>'<option value="'+s+'"'+(s===40?' selected':'')+'>'+s+' คน ('+(s/PS)+' ปาร์ตี้)</option>').join('')+'</select></label>',
+    buttons:[{label:'ยกเลิก'},{label:'สร้างทีม',cls:'primary',fn:()=>{
+      const n = $('#nt-n').value.trim() || 'ทีมใหม่';
+      const t = newTeam(n, $('#nt-a').value);
+      t.size = +$('#nt-s').value;
+      state.teams.push(t); state.active = t.id; render();
+    }}], onOpen:()=>{ const i=$('#nt-n'); i.focus(); i.select(); }});
+}
+function newActivityModal(onDone){
+  modal({title:'เพิ่มกิจกรรมใหม่',
+    html:'<label class="fld">ชื่อกิจกรรม<input type="text" id="na-n" maxlength="30" placeholder="เช่น โบนัสกิลด์, Boss Hunt"></label>'
+      +'<label class="fld">ไอคอน (อีโมจิ)<input type="text" id="na-i" maxlength="4" value="⭐"></label>',
+    buttons:[{label:'ยกเลิก',fn:()=>{ if(onDone) onDone(null); }},{label:'เพิ่มกิจกรรม',cls:'primary',fn:()=>{
+      const n = $('#na-n').value.trim();
+      if(!n){ toast('กรอกชื่อกิจกรรมก่อน'); return false; }
+      if(!state.activities.some(a=>a.name===n)) state.activities.push({name:n, icon:$('#na-i').value.trim()||'⭐'});
+      if(onDone) onDone(n);
+    }}], onOpen:()=>$('#na-n').focus()});
+}
+function actRow(a, orig){
+  return '<div class="arow" data-orig="'+esc(orig||'')+'"><input type="text" class="ai" value="'+esc(a.icon)+'" maxlength="4" aria-label="ไอคอน">'
+    + '<input type="text" class="an" value="'+esc(a.name)+'" maxlength="30" placeholder="ชื่อกิจกรรม" aria-label="ชื่อกิจกรรม">'
+    + '<button class="icon" data-adel title="ลบ" aria-label="ลบกิจกรรม">✕</button></div>';
+}
+function actsModal(){
+  modal({title:'จัดการหมวดหมู่กิจกรรม',
+    html:'<p class="help">เพิ่ม แก้ไขชื่อ เปลี่ยนไอคอน หรือลบกิจกรรมได้ตามต้องการ ทีมที่ใช้กิจกรรมที่ถูกลบจะถูกย้ายไปกิจกรรมแรกในรายการ</p><div id="al" style="display:flex;flex-direction:column;gap:6px"></div>'
+      +'<div class="row"><button class="btn sm" id="aadd">＋ เพิ่มกิจกรรม</button><button class="btn sm" id="areset">คืนค่าเริ่มต้น</button></div>',
+    buttons:[{label:'ยกเลิก'},{label:'บันทึก',cls:'primary',fn:()=>{
+      const out = [], seen = new Set(), rename = {};
+      document.querySelectorAll('#al .arow').forEach(r=>{
+        const name = r.querySelector('.an').value.trim();
+        if(!name || seen.has(name.toLowerCase())) return;
+        seen.add(name.toLowerCase());
+        out.push({name, icon:r.querySelector('.ai').value.trim()||'⭐'});
+        if(r.dataset.orig) rename[r.dataset.orig] = name;
+      });
+      if(!out.length){ toast('ต้องมีอย่างน้อย 1 กิจกรรม'); return false; }
+      let moved = 0;
+      state.teams.forEach(t=>{
+        if(rename[t.activity]) t.activity = rename[t.activity];
+        else { t.activity = out[0].name; moved++; }
+      });
+      state.activities = out; render();
+      toast(moved ? 'บันทึกแล้ว · ย้าย '+moved+' ทีมไปกิจกรรม “'+out[0].name+'”' : 'บันทึกหมวดหมู่กิจกรรมแล้ว');
+    }}],
+    onOpen:()=>{
+      const al = $('#al');
+      const fill = (list, keep) => al.innerHTML = list.map(a=>actRow(a, keep?a.name:'')).join('');
+      fill(state.activities, true);
+      $('#aadd').onclick = ()=>{ al.insertAdjacentHTML('beforeend', actRow({name:'',icon:'⭐'}, '')); al.lastElementChild.querySelector('.an').focus(); };
+      $('#areset').onclick = ()=>fill(DEFAULT_ACTS, false);
+      al.addEventListener('click', e=>{ const d = e.target.closest('[data-adel]'); if(d) d.closest('.arow').remove(); });
+    }});
+}
+function resizeTeam(t, size){
+  const keep = size/PS, orphans = [];
+  t.parties.forEach((pt,p)=>{ if(p>=keep) pt.slots.forEach((id,i)=>{ if(id){ orphans.push(id); pt.slots[i] = null; } }); });
+  t.size = size;
+  let toReserve = 0, removed = 0;
+  orphans.forEach(id=>{
+    let placed = false;
+    for(let p=0;p<keep && !placed;p++){
+      const i = t.parties[p].slots.indexOf(null);
+      if(i>=0){ t.parties[p].slots[i] = id; placed = true; }
+    }
+    if(!placed){ if(t.reserves.length<MAXRES){ t.reserves.push(id); toReserve++; } else removed++; }
+  });
+  if(orphans.length) toast('ปรับเป็น '+size+' คน · ย้ายสมาชิก '+orphans.length+' คนที่อยู่เกินขนาดแล้ว'+(toReserve?' (ไปสำรอง '+toReserve+')':'')+(removed?' (นำออก '+removed+')':''));
+}
+function dupTeam(){
+  const t = team();
+  const c = JSON.parse(JSON.stringify(t));
+  c.id = uid(); c.name = t.name+' (สำเนา)';
+  state.teams.push(c); state.active = c.id; render(); toast('ทำสำเนาทีมแล้ว');
+}
+function delTeam(){
+  const t = team();
+  confirmBox('ลบ “'+t.name+'” ทั้งทีมใช่ไหม? รายชื่อสมาชิกจะยังอยู่ในรายการด้านซ้าย', 'ลบทีม', ()=>{
+    state.teams = state.teams.filter(x=>x.id!==t.id);
+    if(!state.teams.length) state.teams.push(newTeam('ทีม A', state.activities[0].name));
+    state.active = state.teams[0].id; render();
+  });
+}
+function clearTeam(){
+  const t = team();
+  confirmBox('นำสมาชิกทั้งหมดออกจาก “'+t.name+'” ใช่ไหม? (รวมรายชื่อสำรอง)', 'ล้างทีม', ()=>{
+    t.parties.forEach(p=>p.slots = Array(PS).fill(null)); t.reserves = []; render();
+  });
+}
+function teamText(t){
+  const a = actOf(t.activity);
+  const lines = [a.icon+' '+t.activity+' · '+t.name, ''];
+  t.parties.forEach(p=>{
+    const ms = p.slots.map(id=>id&&byId[id]).filter(Boolean);
+    if(!ms.length) return;
+    lines.push(p.name+' ('+ms.length+'/'+PS+')');
+    ms.forEach((m,i)=>lines.push('  '+(i+1)+'. '+m.name+' ('+m.job+')'+(m.id===p.head?' 👑 หัวหน้า':'')));
+    lines.push('');
+  });
+  const rs = t.reserves.map(id=>byId[id]).filter(Boolean);
+  if(rs.length){ lines.push('สำรอง'); rs.forEach(m=>lines.push('  - '+m.name+' ('+m.job+')')); }
+  return lines.join('\n').trim();
+}
+function copyText(ta){
+  ta.select();
+  let ok = false;
+  try{ ok = document.execCommand('copy'); }catch(e){}
+  if(!ok && navigator.clipboard){ navigator.clipboard.writeText(ta.value).then(()=>toast('คัดลอกแล้ว'),()=>toast('คัดลอกไม่สำเร็จ · เลือกข้อความแล้วกด Ctrl+C')); return; }
+  toast(ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ · เลือกข้อความแล้วกด Ctrl+C');
+}
+function exportModal(){
+  modal({title:'รายชื่อทีมสำหรับวางในแชท',
+    html:'<textarea id="ex" rows="14" readonly></textarea>',
+    buttons:[{label:'ปิด'},{label:'คัดลอก',cls:'primary',fn:()=>{ copyText($('#ex')); return false; }}],
+    onOpen:()=>{ $('#ex').value = teamText(team()); }});
+}
+
+/* ---------- modals: jobs & data ---------- */
+function setRowIcon(row, url){
+  row.dataset.icon = url || '';
+  const lb = row.querySelector('.jic');
+  const old = lb.querySelector('img'); if(old) old.remove();
+  if(lb.firstChild && lb.firstChild.nodeType===3) lb.firstChild.remove();
+  if(url){ const im = document.createElement('img'); im.src = url; im.alt = ''; lb.prepend(im); }
+  else lb.prepend(document.createTextNode('＋'));
+}
+function fileToIcon(file){
+  return new Promise((resolve,reject)=>{
+    const fr = new FileReader();
+    fr.onerror = reject;
+    fr.onload = ()=>{
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = ()=>{
+        const S = 72, c = document.createElement('canvas');
+        c.width = c.height = S;
+        const k = Math.min(S/img.width, S/img.height), w = img.width*k, h = img.height*k;
+        c.getContext('2d').drawImage(img, (S-w)/2, (S-h)/2, w, h);
+        resolve(c.toDataURL('image/png'));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function jobRow(j){
+  return '<div class="jrow" data-icon="'+esc(j.icon||'')+'"><label class="jic" title="อัปโหลดไอคอนอาชีพ">'+(j.icon?'<img src="'+esc(j.icon)+'" alt="">':'＋')+'<input type="file" accept="image/*" hidden></label>'
+    + '<input type="text" class="jn" value="'+esc(j.name)+'" maxlength="30" placeholder="ชื่ออาชีพ">'
+    + '<select class="jr">'+ROLE_ORDER.map(r=>'<option value="'+r+'"'+(r===j.role?' selected':'')+'>'+ROLES[r].l+'</option>').join('')+'</select>'
+    + '<input type="color" class="jcol" value="'+esc(jobColorValue(j))+'" data-set="'+(j.color?1:0)+'" title="เลือกสีของอาชีพ (ถ้าไม่เลือก จะใช้สีตามบทบาท)" aria-label="สีของอาชีพ">'
+    + '<button class="icon" data-jdel title="ลบ" aria-label="ลบอาชีพ">✕</button></div>';
+}
+function jobsModal(){
+  modal({title:'จัดการอาชีพและบทบาท',
+    html:'<p class="help">รายการอาชีพตั้งค่าเริ่มต้นไว้ให้แล้ว แก้ไขชื่อ เพิ่ม หรือลบให้ตรงกับเกมได้ บทบาทใช้กำหนดสีของการ์ดและสรุปสัดส่วนในทีม</p><div id="jl" style="display:flex;flex-direction:column;gap:6px"></div>'
+      +'<div class="row" style="flex-wrap:wrap"><button class="btn sm" id="jadd">＋ เพิ่มอาชีพ</button><button class="btn sm" id="jbulk">อัปโหลดไอคอนหลายไฟล์</button><button class="btn sm" id="jclr">ล้างไอคอน</button><button class="btn sm" id="jcolreset">คืนสีตามบทบาท</button><button class="btn sm" id="jreset">คืนค่าเริ่มต้น</button></div><input type="file" id="jfiles" accept="image/*" multiple hidden>',
+    buttons:[{label:'ยกเลิก'},{label:'บันทึก',cls:'primary',fn:()=>{
+      const seen = new Set(), out = [];
+      document.querySelectorAll('#jl .jrow').forEach(r=>{
+        const name = r.querySelector('.jn').value.trim();
+        if(name && !seen.has(name.toLowerCase())){ seen.add(name.toLowerCase()); const o = {name, role:r.querySelector('.jr').value}; if(r.dataset.icon) o.icon = r.dataset.icon;
+        const cc = r.querySelector('.jcol'); if(cc && cc.dataset.set==='1') o.color = cc.value;
+        out.push(o); }
+      });
+      if(!out.length){ toast('ต้องมีอย่างน้อย 1 อาชีพ'); return false; }
+      state.jobs = out; render();
+    }}],
+    onOpen:()=>{
+      const jl = $('#jl');
+      const fill = list => jl.innerHTML = list.map(jobRow).join('');
+      fill(state.jobs);
+      $('#jadd').onclick = ()=>{ jl.insertAdjacentHTML('beforeend', jobRow({name:'',role:'dps'})); jl.lastElementChild.querySelector('.jn').focus(); };
+      $('#jreset').onclick = ()=>fill(DEFAULT_JOBS.map(([name,role])=>({name,role})));
+      $('#jbulk').onclick = ()=>$('#jfiles').click();
+      jl.addEventListener('input', e=>{ if(e.target.classList.contains('jcol')) e.target.dataset.set = '1'; });
+      jl.addEventListener('change', e=>{
+        if(!e.target.classList.contains('jr')) return;
+        const c = e.target.closest('.jrow').querySelector('.jcol');
+        if(c.dataset.set!=='1') c.value = ROLE_HEX[e.target.value] || ROLE_HEX.other;
+      });
+      $('#jcolreset').onclick = ()=>jl.querySelectorAll('.jrow').forEach(r=>{
+        const c = r.querySelector('.jcol'); c.dataset.set = '0';
+        c.value = ROLE_HEX[r.querySelector('.jr').value] || ROLE_HEX.other;
+      });
+      $('#jclr').onclick = ()=>jl.querySelectorAll('.jrow').forEach(r=>setRowIcon(r,''));
+      $('#jfiles').onchange = async e=>{
+        const norm = s=>String(s).toLowerCase().replace(/\.[a-z0-9]+$/,'').replace(/[\s_\-]+/g,'');
+        const rows = [...jl.querySelectorAll('.jrow')];
+        let n = 0;
+        for(const f of e.target.files){
+          const key = norm(f.name);
+          const row = rows.find(r=>norm(r.querySelector('.jn').value)===key);
+          if(row){ try{ setRowIcon(row, await fileToIcon(f)); n++; }catch(err){} }
+        }
+        e.target.value = '';
+        toast(n ? ('จับคู่ไอคอนสำเร็จ '+n+' อาชีพ') : 'ไม่พบไฟล์ที่ชื่อตรงกับชื่ออาชีพ');
+      };
+      jl.addEventListener('change', async e=>{
+        const f = e.target;
+        if(f.type!=='file' || !f.files[0]) return;
+        try{ setRowIcon(f.closest('.jrow'), await fileToIcon(f.files[0])); }catch(err){ toast('อ่านไฟล์รูปไม่ได้'); }
+        f.value = '';
+      });
+      jl.addEventListener('click', e=>{ const d = e.target.closest('[data-jdel]'); if(d) d.closest('.jrow').remove(); });
+    }});
+}
+/* ---------- export / import (JSON + Excel) ---------- */
+function roleKey(v){
+  v = String(v||'').trim().toLowerCase();
+  for(const k in ROLES){ if(k===v || ROLES[k].l===v) return k; }
+  return 'other';
+}
+function stamp(){
+  const d = new Date(), p = n=>String(n).padStart(2,'0');
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes());
+}
+async function saveFile(filename, data){
+  try{
+    const type = /\.xlsx$/i.test(filename) ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/json';
+    const blob = data instanceof Blob ? data : new Blob([data], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    toast('ดาวน์โหลดไฟล์แล้ว');
+  }catch(err){ toast('ดาวน์โหลดไม่สำเร็จ · ใช้ปุ่มคัดลอก JSON แทน'); }
+}
+function exportJSON(){
+  return JSON.stringify({app:'ro-tnw-party-planner', version:1, exportedAt:new Date().toISOString(), data:state}, null, 2);
+}
+function buildWorkbook(){
+  const X = window.XLSX, wb = X.utils.book_new();
+  const sheet = (name, head, rows, widths)=>{
+    const ws = X.utils.aoa_to_sheet([head].concat(rows));
+    ws['!cols'] = widths.map(w=>({wch:w}));
+    X.utils.book_append_sheet(wb, ws, name);
+  };
+  const mem = {}; state.members.forEach(m=>mem[m.id]=m);
+  sheet('สมาชิก', ['ชื่อ','อาชีพ'], state.members.map(m=>[m.name,m.job]), [24,20]);
+  sheet('ทีม', ['ชื่อทีม','กิจกรรม','จำนวนคน'], state.teams.map(t=>[t.name,t.activity,t.size]), [24,22,10]);
+  const rows = [];
+  state.teams.forEach(t=>{
+    t.parties.forEach((pt,p)=>pt.slots.forEach((id,i)=>{
+      const m = id && mem[id]; if(!m) return;
+      rows.push([t.name, p+1, pt.name, i+1, m.name, m.job, pt.head===id?'✓':'']);
+    }));
+    t.reserves.forEach((id,i)=>{ const m = mem[id]; if(m) rows.push([t.name,'สำรอง','',i+1,m.name,m.job,'']); });
+  });
+  sheet('การจัดทีม', ['ชื่อทีม','ปาร์ตี้','ชื่อปาร์ตี้','ช่อง','ชื่อสมาชิก','อาชีพ','หัวหน้า'], rows, [20,10,18,8,24,20,10]);
+  sheet('อาชีพ', ['อาชีพ','บทบาท','สี'], state.jobs.map(j=>[j.name,(ROLES[j.role]||ROLES.other).l,j.color||'']), [22,14,10]);
+  sheet('กิจกรรม', ['กิจกรรม','ไอคอน'], state.activities.map(a=>[a.name,a.icon]), [24,8]);
+  return X.write(wb, {bookType:'xlsx', type:'array'});
+}
+function normalizeJSON(o){
+  const s = (o && o.data && Array.isArray(o.data.members)) ? o.data : o;
+  if(!s || !Array.isArray(s.members) || !Array.isArray(s.teams)) throw new Error('bad json');
+  const idm = {};
+  s.members.forEach(m=>{ idm[m.id] = {name:String(m.name||'').trim(), job:String(m.job||'').trim()}; });
+  const ref = id=>idm[id] || null;
+  return {
+    members: s.members.map(m=>({name:String(m.name||'').trim(), job:String(m.job||'').trim()})),
+    jobs: (s.jobs||[]).map(j=>({name:String(j.name||'').trim(), role:roleKey(j.role), icon:j.icon, color:j.color})),
+    activities: (s.activities||[]).map(a=>({name:String(a.name||'').trim(), icon:a.icon})),
+    teams: s.teams.map(t=>({
+      name:t.name, activity:t.activity, size:t.size,
+      parties:(t.parties||[]).map(p=>({name:p.name, slots:(p.slots||[]).map(ref), head:p.head?(p.slots||[]).indexOf(p.head):-1})),
+      reserves:(t.reserves||[]).map(ref).filter(Boolean)
+    }))
+  };
+}
+function normalizeXLSX(wb){
+  const S = v=>String(v==null?'':v).trim();
+  const rows = n=>wb.Sheets[n] ? window.XLSX.utils.sheet_to_json(wb.Sheets[n], {defval:''}) : [];
+  const inc = {members:[], jobs:[], activities:[], teams:[]}, tmap = {};
+  const getT = name=>tmap[name] || (tmap[name] = inc.teams[inc.teams.push({name, activity:'', size:PS*NP, parties:[], reserves:[]})-1]);
+  rows('สมาชิก').forEach(r=>{ if(S(r['ชื่อ'])) inc.members.push({name:S(r['ชื่อ']), job:S(r['อาชีพ'])}); });
+  rows('อาชีพ').forEach(r=>{ if(S(r['อาชีพ'])) inc.jobs.push({name:S(r['อาชีพ']), role:roleKey(r['บทบาท']), color:S(r['สี'])}); });
+  rows('กิจกรรม').forEach(r=>{ if(S(r['กิจกรรม'])) inc.activities.push({name:S(r['กิจกรรม']), icon:S(r['ไอคอน'])||'⭐'}); });
+  rows('ทีม').forEach(r=>{
+    if(!S(r['ชื่อทีม'])) return;
+    const t = getT(S(r['ชื่อทีม'])); t.activity = S(r['กิจกรรม']);
+    const n = parseInt(r['จำนวนคน'],10); if(SIZES.includes(n)) t.size = n;
+  });
+  rows('การจัดทีม').forEach(r=>{
+    const tn = S(r['ชื่อทีม']), mn = S(r['ชื่อสมาชิก']); if(!tn || !mn) return;
+    const t = getT(tn), ref = {name:mn, job:S(r['อาชีพ'])}, pv = S(r['ปาร์ตี้']);
+    if(pv==='สำรอง'){ t.reserves.push(ref); return; }
+    const p = parseInt(pv,10)-1; if(!(p>=0 && p<NP)) return;
+    const pt = t.parties[p] || (t.parties[p] = {name:'', slots:Array(PS).fill(null), head:-1});
+    if(S(r['ชื่อปาร์ตี้'])) pt.name = S(r['ชื่อปาร์ตี้']);
+    let i = parseInt(r['ช่อง'],10)-1;
+    if(!(i>=0 && i<PS) || pt.slots[i]) i = pt.slots.indexOf(null);
+    if(i<0) return;
+    pt.slots[i] = ref;
+    const h = S(r['หัวหน้า']).toLowerCase();
+    if(h && !['0','no','false','n','-'].includes(h)) pt.head = i;
+  });
+  return inc;
+}
+function ensureJob(name){
+  if(name && !state.jobs.some(x=>x.name.toLowerCase()===name.toLowerCase())) state.jobs.push({name, role:'other'});
+}
+// เพิ่มข้อมูลที่นำเข้าเข้ากับข้อมูลเดิมเท่านั้น: ไม่ลบ ไม่ทับ ไม่แก้ทีมเดิม
+function mergeIncoming(inc){
+  const added = {members:0, teams:0, jobs:0, acts:0};
+  const okIcon = v=>typeof v==='string' && /^data:image\//.test(v);
+  (inc.jobs||[]).forEach(j=>{
+    if(!j.name) return;
+    const ex = state.jobs.find(x=>x.name.toLowerCase()===j.name.toLowerCase());
+    if(!ex){ const o = {name:j.name, role:ROLES[j.role]?j.role:'other'}; if(okIcon(j.icon)) o.icon = j.icon; if(/^#[0-9a-f]{6}$/i.test(j.color||'')) o.color = j.color; state.jobs.push(o); added.jobs++; }
+    else if(!ex.icon && okIcon(j.icon)) ex.icon = j.icon;
+  });
+  (inc.activities||[]).forEach(a=>{
+    if(a && a.name && !state.activities.some(x=>x.name.toLowerCase()===a.name.toLowerCase())){ state.activities.push({name:a.name, icon:a.icon||'⭐'}); added.acts++; }
+  });
+  const key = (n,j)=>n.toLowerCase()+'|'+j.toLowerCase();
+  const idx = {}; state.members.forEach(m=>{ idx[key(m.name,m.job)] = m.id; });
+  const getId = (n,j)=>{
+    n = String(n||'').trim(); j = String(j||'').trim();
+    if(!n) return null;
+    if(!j) j = (state.jobs[0]||{}).name || '';
+    const k = key(n,j);
+    if(!idx[k]){ const id = uid(); state.members.push({id, name:n.slice(0,24), job:j}); idx[k] = id; added.members++; ensureJob(j); }
+    return idx[k];
+  };
+  (inc.members||[]).forEach(m=>getId(m.name, m.job));
+  const names = new Set(state.teams.map(t=>t.name.toLowerCase()));
+  (inc.teams||[]).forEach(it=>{
+    let name = String(it.name||'').trim() || 'ทีมนำเข้า';
+    if(names.has(name.toLowerCase())){
+      let k = 1, nn;
+      do{ nn = name+' (นำเข้า'+(k>1?' '+k:'')+')'; k++; }while(names.has(nn.toLowerCase()));
+      name = nn;
+    }
+    names.add(name.toLowerCase());
+    let act = String(it.activity||'').trim() || state.activities[0].name;
+    const ea = state.activities.find(a=>a.name.toLowerCase()===act.toLowerCase());
+    if(ea) act = ea.name; else state.activities.push({name:act, icon:'⭐'});
+    const t = newTeam(name.slice(0,30), act);
+    const sz = +it.size; if(SIZES.includes(sz)) t.size = sz;
+    const used = new Set();
+    (it.parties||[]).forEach((ip,p)=>{
+      if(!ip || p>=NP) return;
+      const pt = t.parties[p];
+      if(ip.name) pt.name = String(ip.name).slice(0,24);
+      (ip.slots||[]).slice(0,PS).forEach((r,i)=>{
+        if(!r) return;
+        const id = getId(r.name, r.job);
+        if(id && !used.has(id)){ used.add(id); pt.slots[i] = id; if(ip.head===i) pt.head = id; }
+      });
+    });
+    (it.reserves||[]).forEach(r=>{
+      const id = getId(r.name, r.job);
+      if(id && !used.has(id) && t.reserves.length<MAXRES){ used.add(id); t.reserves.push(id); }
+    });
+    let need = 0; t.parties.forEach((pt,p)=>{ if(pt.slots.some(Boolean)) need = p+1; });
+    if(need*PS > t.size) t.size = need*PS;
+    state.teams.push(t); added.teams++;
+  });
+  return added;
+}
+function dataModal(){
+  modal({title:'ส่งออก / นำเข้าข้อมูล',
+    html:'<p class="help">ข้อมูลบันทึกในฐานข้อมูลกลางอัตโนมัติ ทุกเครื่องเห็นตรงกัน การนำเข้าจะ <b>เพิ่มเข้ากับข้อมูลเดิม</b> ไม่ลบและไม่ทับของเดิม</p>'
+      +'<div class="dsec"><b>ส่งออก</b><div class="row" style="flex-wrap:wrap"><button class="btn sm" id="dx-json">ดาวน์โหลด JSON</button><button class="btn sm" id="dx-xlsx">ดาวน์โหลด Excel (.xlsx)</button><button class="btn sm" id="dx-copy">คัดลอก JSON</button></div><p class="help">JSON เก็บข้อมูลครบทุกอย่างรวมไอคอนอาชีพ · Excel มีชีต สมาชิก, ทีม, การจัดทีม, อาชีพ, กิจกรรม เปิดดูและแก้ไขได้</p></div>'
+      +'<div class="dsec adm-only"><b>นำเข้า</b><input type="file" id="di-file" accept=".json,.xlsx,.xls,application/json"><textarea id="di-text" rows="5" spellcheck="false" placeholder="หรือวางข้อความ JSON ที่นี่"></textarea><div class="row"><button class="btn primary sm" id="di-go">นำเข้า (เพิ่มเข้ากับข้อมูลเดิม)</button></div><p class="help">ทีมที่นำเข้าจะถูกเพิ่มเป็นทีมใหม่ ถ้าชื่อซ้ำกับทีมเดิมจะต่อท้ายว่า (นำเข้า) สมาชิกที่ชื่อและอาชีพตรงกับที่มีอยู่แล้วจะไม่ถูกเพิ่มซ้ำ</p></div>',
+    buttons:[{label:'ปิด'}],
+    onOpen:()=>{
+      $('#dx-json').onclick = ()=>saveFile('ro-party-'+stamp()+'.json', exportJSON());
+      $('#dx-xlsx').onclick = ()=>{
+        if(!window.XLSX){ toast('โหลดตัวสร้าง Excel ไม่สำเร็จ · ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'); return; }
+        saveFile('ro-party-'+stamp()+'.xlsx', buildWorkbook());
+      };
+      $('#dx-copy').onclick = ()=>{
+        const ta = document.createElement('textarea');
+        ta.value = exportJSON(); ta.style.cssText = 'position:fixed;opacity:0;top:0';
+        document.body.appendChild(ta); copyText(ta); ta.remove();
+      };
+      $('#di-go').onclick = async ()=>{
+        try{
+          const f = $('#di-file').files[0], txt = $('#di-text').value.trim();
+          let inc;
+          if(f){
+            if(/\.(xlsx|xls)$/i.test(f.name)){
+              if(!window.XLSX) throw new Error('xlsx');
+              inc = normalizeXLSX(window.XLSX.read(await f.arrayBuffer(), {type:'array'}));
+            } else inc = normalizeJSON(JSON.parse(await f.text()));
+          } else if(txt) inc = normalizeJSON(JSON.parse(txt));
+          else { toast('เลือกไฟล์หรือวางข้อความ JSON ก่อน'); return; }
+          const a = mergeIncoming(inc);
+          render(); closeModal();
+          toast('นำเข้าแล้ว · สมาชิกใหม่ '+a.members+' · ทีมใหม่ '+a.teams);
+        }catch(err){ toast('นำเข้าไม่สำเร็จ · ไฟล์หรือข้อความไม่ถูกต้อง'); }
+      };
+    }});
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e=>{
+  const b = e.target.closest('button[data-act]'); if(!b) return;
+  const d = b.dataset, t = team();
+  if(!canEdit && !['tab','export','theme','data','login','logout'].includes(d.act)) return;
+  switch(d.act){
+    case 'addmem': addMember(); break;
+    case 'bulk': bulkAdd(); break;
+    case 'editmem': editMember(d.mid); break;
+    case 'tab': state.active = d.id; render(); break;
+    case 'newteam': newTeamModal(); break;
+    case 'acts': actsModal(); break;
+    case 'dupteam': dupTeam(); break;
+    case 'delteam': delTeam(); break;
+    case 'clearteam': clearTeam(); break;
+    case 'export': exportModal(); break;
+    case 'head': {
+      const pt = t.parties[+d.p], id = pt.slots[+d.i];
+      pt.head = (pt.head===id) ? null : id; render(); break;
+    }
+    case 'rmslot': t.parties[+d.p].slots[+d.i] = null; render(); break;
+    case 'rmres': t.reserves = t.reserves.filter(id=>id!==d.mid); render(); break;
+    case 'pick': openPick({type:'slot',p:+d.p,i:+d.i}); break;
+    case 'pickres':
+      if(t.reserves.length>=MAXRES){ toast('รายชื่อสำรองเต็มแล้ว (สูงสุด '+MAXRES+' คน)'); break; }
+      openPick({type:'reserve'}); break;
+    case 'login': loginModal(); break;
+    case 'logout': doLogout(); break;
+    case 'jobs': jobsModal(); break;
+    case 'data': dataModal(); break;
+    case 'theme': {
+      const root = document.documentElement;
+      const dark = root.dataset.theme ? root.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      root.dataset.theme = dark ? 'light' : 'dark';
+      try{ localStorage.setItem(THEME_KEY, root.dataset.theme); }catch(err){}
+      break;
+    }
+  }
+});
+document.addEventListener('change', e=>{
+  const el = e.target, a = el.dataset && el.dataset.act; if(!a) return;
+  if(!canEdit) return;
+  const t = team();
+  if(a==='pname'){ t.parties[+el.dataset.p].name = el.value.trim() || ('ปาร์ตี้ '+(+el.dataset.p+1)); render(); }
+  else if(a==='tname'){ t.name = el.value.trim() || t.name; render(); }
+  else if(a==='tsize'){ resizeTeam(t, +el.value); render(); }
+  else if(a==='tact'){
+    if(el.value==='__new') newActivityModal(n=>{ if(n) t.activity = n; render(); });
+    else { t.activity = el.value; render(); }
+  }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && e.target.id==='nm'){ e.preventDefault(); addMember(); }
+  if(e.key==='Enter' && e.target.classList && (e.target.classList.contains('pname')||e.target.classList.contains('tname'))) e.target.blur();
+});
+$('#q').addEventListener('input', e=>{ ui.q = e.target.value; renderRoster(); });
+$('#hide').addEventListener('change', e=>{ ui.hide = e.target.checked; renderRoster(); });
+
+/* ---------- shared database (Firebase) + admin login ---------- */
+const cloud = {mode:'loading', fs:null, auth:null, user:null, ready:false, sid:uid(), lastCore:'', lastIcons:'{}', remoteExists:false, pendingCore:null, pendingIcons:null, saveTimer:null, applyTimer:null, saving:false};
+const MERGED_KEY = 'ro-tnw-local-merged';
+const hhmm = ()=>new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+const withTimeout = (p,ms)=>Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej({code:'timeout'}),ms))]);
+
+function blankState(){
+  return sanitize({members:[], teams:[newTeam('ทีม A','Guild League')], jobs:null, activities:null});
+}
+function loadLocalSaved(){
+  try{
+    const raw = localStorage.getItem(KEY); if(!raw) return null;
+    const s = JSON.parse(raw);
+    if(s && Array.isArray(s.members) && Array.isArray(s.teams) && s.teams.length) return sanitize(s);
+  }catch(e){}
+  return null;
+}
+function mergedFlag(){ try{ return !!localStorage.getItem(MERGED_KEY); }catch(e){ return true; } }
+function setMerged(){ try{ localStorage.setItem(MERGED_KEY,'1'); }catch(e){} }
+
+// icons are stored in their own document so the main one stays small; the open tab is per-device, not shared
+function splitState(s){
+  const icons = {};
+  const jobs = s.jobs.map(j=>{ if(j.icon) icons[j.name] = j.icon; const o = Object.assign({}, j); delete o.icon; return o; });
+  const core = Object.assign({}, s, {jobs});
+  delete core.active;
+  return {core, icons};
+}
+function applyShared(coreJson, iconsJson){
+  const c = JSON.parse(coreJson), ic = JSON.parse(iconsJson||'{}');
+  c.jobs = (c.jobs||[]).map(j=>ic[j.name] ? Object.assign({}, j, {icon:ic[j.name]}) : j);
+  c.active = state.active;
+  state = sanitize(c);
+}
+
+function isAdminUser(u){
+  if(!u) return false;
+  const list = (window.ADMIN_EMAILS||[]).map(x=>String(x).toLowerCase());
+  if(!list.length) return true;   // UI hint only; Firestore rules are the real gate
+  return list.includes(String(u.email||'').toLowerCase());
+}
+
+function setGate(kind, msg){
+  const T = {
+    error:['เชื่อมต่อฐานข้อมูลไม่สำเร็จ','<p class="help" style="font-size:14px;color:var(--ink)">'+esc(msg||'ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่')+'</p><div class="row"><button class="btn primary" id="gate-retry">ลองใหม่</button></div>']
+  };
+  const g = $('#gate'), c = T[kind]; if(!c) return;
+  g.hidden = false;
+  g.querySelector('h3').textContent = c[0];
+  g.querySelector('.dlg-body').innerHTML = c[1];
+  const b = $('#gate-retry'); if(b) b.onclick = ()=>location.reload();
+}
+function setSync(t){ const el = $('#sync'); if(el) el.textContent = t; }
+function renderWho(){
+  let h;
+  if(cloud.mode==='local'){
+    h = '<span class="pill adm">💾 โหมดเครื่องเดียว</span><span>ยังไม่ได้ตั้งค่า Firebase · ข้อมูลอยู่ในเครื่องนี้เท่านั้น</span>';
+  } else if(canEdit){
+    h = '<span class="pill adm">👑 ผู้ดูแล</span><span>'+esc((cloud.user&&cloud.user.email)||'')+'</span><span id="sync"></span><button class="btn sm" data-act="logout">ออกจากระบบ</button>';
+  } else {
+    h = '<span class="pill">👁 ดูอย่างเดียว</span><span id="sync"></span><button class="btn sm" data-act="login">เข้าสู่ระบบผู้ดูแล</button>';
+  }
+  $('#who').innerHTML = h;
+}
+
+function authMsg(err){
+  const c = err && err.code;
+  if(['auth/invalid-credential','auth/wrong-password','auth/user-not-found','auth/invalid-email'].includes(c)) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  if(c==='auth/too-many-requests') return 'ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่';
+  if(c==='auth/network-request-failed') return 'เชื่อมต่อเครือข่ายไม่ได้';
+  if(c==='auth/operation-not-allowed') return 'ยังไม่ได้เปิดใช้การเข้าสู่ระบบด้วยอีเมลใน Firebase';
+  return 'เข้าสู่ระบบไม่สำเร็จ';
+}
+function doLogin(){
+  const e = $('#lg-e').value.trim(), p = $('#lg-p').value;
+  if(!e || !p){ toast('กรอกอีเมลและรหัสผ่าน'); return false; }
+  cloud.auth.signInWithEmailAndPassword(e, p)
+    .then(()=>{ closeModal(); })
+    .catch(err=>toast(authMsg(err)));
+  return false;
+}
+function loginModal(){
+  if(!cloud.auth){ toast('ยังไม่ได้ตั้งค่า Firebase'); return; }
+  modal({title:'เข้าสู่ระบบผู้ดูแล',
+    html:'<p class="help">เฉพาะผู้ดูแลเท่านั้นที่แก้ไขข้อมูลได้ ผู้ใช้ทั่วไปไม่ต้องเข้าสู่ระบบ เปิดดูข้อมูลได้เลย</p>'
+      +'<label class="fld">อีเมล<input type="email" id="lg-e" autocomplete="username" inputmode="email"></label>'
+      +'<label class="fld">รหัสผ่าน<input type="password" id="lg-p" autocomplete="current-password"></label>',
+    buttons:[{label:'ยกเลิก'},{label:'เข้าสู่ระบบ',cls:'primary',fn:doLogin}],
+    onOpen:()=>{
+      $('#lg-e').focus();
+      $('#lg-p').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+    }});
+}
+function doLogout(){
+  if(!cloud.auth) return;
+  cloud.auth.signOut().then(()=>toast('ออกจากระบบแล้ว'));
+}
+
+async function flush(){
+  cloud.saveTimer = null;
+  if(cloud.saving){ cloud.saveTimer = setTimeout(flush, 300); return; }
+  if(!canEdit || !cloud.fs || !cloud.ready) return;
+  const parts = splitState(state);
+  const cj = JSON.stringify(parts.core), ij = JSON.stringify(parts.icons);
+  if(cj===cloud.lastCore && ij===cloud.lastIcons){ setSync('บันทึกแล้ว'); return; }
+  cloud.saving = true; setSync('กำลังบันทึก…');
+  let ok = true;
+  try{
+    const now = Date.now(), by = (cloud.user && cloud.user.email) || null;
+    if(cj!==cloud.lastCore){
+      await cloud.fs.doc('planner/state').set({json:cj, updatedAt:now, by, sid:cloud.sid});
+      cloud.lastCore = cj; cloud.pendingCore = null; cloud.remoteExists = true;
+    }
+    if(ij!==cloud.lastIcons){
+      await cloud.fs.doc('planner/icons').set({json:ij, updatedAt:now, by, sid:cloud.sid});
+      cloud.lastIcons = ij; cloud.pendingIcons = null;
+    }
+    setSync('บันทึกแล้ว '+hhmm());
+  }catch(err){
+    ok = false;
+    setSync('บันทึกไม่สำเร็จ');
+    const code = err && err.code;
+    toast(code==='permission-denied' ? 'บันทึกไม่สำเร็จ · บัญชีนี้ไม่มีสิทธิ์เขียน (ตรวจสอบ Firestore rules และอีเมลผู้ดูแล)'
+      : code==='invalid-argument' ? 'บันทึกไม่สำเร็จ · ข้อมูลใหญ่เกินไป (เกิน 1 MB)'
+      : 'บันทึกไม่สำเร็จ · ตรวจสอบการเชื่อมต่อ');
+  }
+  cloud.saving = false;
+  if(ok){
+    const a = splitState(state);
+    if(JSON.stringify(a.core)!==cloud.lastCore || JSON.stringify(a.icons)!==cloud.lastIcons) cloud.saveTimer = setTimeout(flush, 350);
+  }
+}
+
+function scheduleApply(){
+  clearTimeout(cloud.applyTimer);
+  cloud.applyTimer = setTimeout(()=>{
+    const busy = (drag && drag.active) || cloud.saveTimer || cloud.saving || (canEdit && !$('#modal').hidden);
+    if(busy){ scheduleApply(); return; }
+    const core = cloud.pendingCore || cloud.lastCore, icons = cloud.pendingIcons || cloud.lastIcons;
+    cloud.pendingCore = null; cloud.pendingIcons = null;
+    if(core===cloud.lastCore && icons===cloud.lastIcons) return;
+    try{
+      applyShared(core, icons);
+      cloud.lastCore = core; cloud.lastIcons = icons;
+      render();
+      setSync('อัปเดตล่าสุด '+hhmm());
+    }catch(e){}
+  }, 400);
+}
+function subscribeShared(){
+  const onErr = ()=>setSync('ขาดการเชื่อมต่อ · ข้อมูลอาจไม่ล่าสุด');
+  cloud.fs.doc('planner/state').onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const d = snap.data();
+    if(!d || typeof d.json!=='string' || d.sid===cloud.sid || d.json===cloud.lastCore) return;
+    cloud.remoteExists = true;
+    cloud.pendingCore = d.json; scheduleApply();
+  }, onErr);
+  cloud.fs.doc('planner/icons').onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const d = snap.data();
+    if(!d || typeof d.json!=='string' || d.sid===cloud.sid || d.json===cloud.lastIcons) return;
+    cloud.pendingIcons = d.json; scheduleApply();
+  }, onErr);
+}
+function offerLocalMerge(local){
+  setMerged();
+  modal({title:'พบข้อมูลเก่าในเครื่องนี้',
+    html:'<p class="help" style="font-size:14px;color:var(--ink)">เครื่องนี้มีข้อมูลที่บันทึกไว้ในเบราว์เซอร์ ('+local.members.length+' สมาชิก, '+local.teams.length+' ทีม) ต้องการรวมเข้ากับข้อมูลกลางไหม การรวมจะ <b>เพิ่ม</b> เข้าไป ไม่ลบหรือทับของเดิม (ถามครั้งเดียวบนเครื่องนี้)</p>',
+    buttons:[{label:'ไม่ต้อง'},{label:'รวมข้อมูล',cls:'primary',fn:()=>{
+      try{
+        const a = mergeIncoming(normalizeJSON(local));
+        render(); toast('รวมแล้ว · สมาชิกใหม่ '+a.members+' · ทีมใหม่ '+a.teams);
+      }catch(e){ toast('รวมข้อมูลไม่สำเร็จ'); }
+    }}]});
+}
+function adminReady(){
+  const local = loadLocalSaved();
+  if(!cloud.remoteExists){
+    // first admin login on a brand-new database: create it from this device's data (or empty)
+    if(local) state = local;
+    setMerged();
+    toast('สร้างฐานข้อมูลกลางแล้ว');
+  } else if(local && !mergedFlag() && JSON.stringify(splitState(local).core)!==cloud.lastCore){
+    offerLocalMerge(local);
+  } else setMerged();
+}
+function onAuth(u){
+  if(u && !isAdminUser(u)){
+    toast('บัญชีนี้ไม่ได้รับสิทธิ์ผู้ดูแล');
+    cloud.auth.signOut();
+    return;
+  }
+  cloud.user = u;
+  canEdit = !!u;
+  document.body.classList.toggle('ro', !canEdit);
+  if(!canEdit){ clearTimeout(cloud.saveTimer); cloud.saveTimer = null; }
+  renderWho();
+  if(canEdit) adminReady();
+  render();
+  if(canEdit) toast('เข้าสู่ระบบแล้ว · แก้ไขข้อมูลได้');
+}
+
+async function boot(){
+  const rc = window.RO_CONFIG || {};
+  const cfg = rc.firebase || {};
+  window.ADMIN_EMAILS = rc.adminEmails || [];
+  const configured = !!(cfg.apiKey && !/^YOUR_/i.test(cfg.apiKey));
+
+  if(!configured){
+    // single-device mode: data stays in this browser (handy for testing before Firebase is set up)
+    cloud.mode = 'local'; canEdit = true;
+    document.body.classList.remove('ro');
+    state = load();
+    cloud.ready = true; $('#gate').hidden = true;
+    renderWho(); render();
+    return;
+  }
+  if(!window.firebase){ setGate('error','โหลดไลบรารี Firebase ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตหรือการบล็อกสคริปต์'); return; }
+
+  cloud.mode = 'firebase';
+  document.body.classList.add('ro');
+  try{
+    window.firebase.initializeApp(cfg);
+    cloud.fs = window.firebase.firestore();
+    cloud.auth = window.firebase.auth();
+  }catch(e){ setGate('error','ค่า Firebase config ไม่ถูกต้อง'); return; }
+  renderWho();
+
+  let s1, s2;
+  try{
+    [s1, s2] = await withTimeout(Promise.all([cloud.fs.doc('planner/state').get(), cloud.fs.doc('planner/icons').get()]), 12000);
+  }catch(e){
+    setGate('error', (e && e.code==='permission-denied') ? 'ไม่มีสิทธิ์อ่านข้อมูล ตรวจสอบ Firestore rules' : 'ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+    return;
+  }
+  const d1 = s1.exists ? s1.data() : null;
+  if(d1 && typeof d1.json==='string'){
+    cloud.remoteExists = true;
+    cloud.lastCore = d1.json;
+    const d2 = s2.exists ? s2.data() : null;
+    cloud.lastIcons = (d2 && typeof d2.json==='string') ? d2.json : '{}';
+    applyShared(cloud.lastCore, cloud.lastIcons);
+  } else {
+    state = blankState();
+    toast('ยังไม่มีข้อมูลทีม · รอผู้ดูแลเข้าสู่ระบบเพื่อสร้างข้อมูล');
+  }
+  cloud.ready = true; $('#gate').hidden = true;
+  render(); setSync('เชื่อมต่อแล้ว');
+  subscribeShared();
+  cloud.auth.onAuthStateChanged(onAuth);
+}
+
+/* ---------- init ---------- */
+try{ const th = localStorage.getItem(THEME_KEY); if(th==='dark'||th==='light') document.documentElement.dataset.theme = th; }catch(e){}
+render();
+boot();
+})();
+</script>
+</body>
+</html>
