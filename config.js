@@ -13,5 +13,5 @@ window.RO_CONFIG = {
   },
 
   // อีเมลผู้ดูแลที่แก้ไขข้อมูลได้ (ต้องตรงกับอีเมลใน firestore.rules ด้วย)
-  adminEmails: ["kuntapongz.101@gmail.com"]
+  adminEmails: ["adminsomtum@gmail.com"]
 };
