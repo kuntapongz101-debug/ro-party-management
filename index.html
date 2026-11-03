@@ -92,6 +92,14 @@ textarea{resize:vertical;font-size:13px}
 .jic{width:38px;height:38px;border:1.5px dashed var(--line);border-radius:8px;display:grid;place-items:center;cursor:pointer;color:var(--muted);overflow:hidden;background:var(--surface2)}
 .jic:hover{border-color:var(--brand)}
 .jic img{width:100%;height:100%;object-fit:contain}
+.rstat{display:flex;flex-direction:column;gap:6px}
+.rtot{font-size:13px;color:var(--muted)}
+.rtot b{font:600 22px "Prompt","Noto Sans Thai",sans-serif;color:var(--ink);margin-right:4px}
+.rsub{color:var(--muted);font-size:12.5px}
+.rsub b{color:var(--ink)}
+.rstat .rolechips{gap:5px}
+.rstat .rc{padding:1px 8px;font-size:12px}
+.tag.dup{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
 .mem .x{opacity:.55}
 .mem .x:hover{opacity:1;color:var(--danger)}
 .drag-ghost{position:fixed;z-index:1000;pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.28);transform:rotate(2deg);background:var(--surface)}
@@ -173,6 +181,9 @@ textarea{resize:vertical;font-size:13px}
 .arow .ai{text-align:center}
 .dsec{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
 .dsec .help{margin:0}
+.tlist{display:flex;flex-direction:column;gap:4px;max-height:190px;overflow:auto}
+.tpick{display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:8px;background:var(--surface);border:1px solid var(--line);color:var(--ink);cursor:pointer}
+.tpick small{margin-left:auto;color:var(--muted);font-size:12px}
 .who{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap;margin-right:4px}
 .who .pill{padding:3px 10px;border-radius:99px;font-weight:600;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
 .who .pill.adm{background:color-mix(in srgb,#d9a026 22%,var(--surface))}
@@ -222,6 +233,7 @@ textarea{resize:vertical;font-size:13px}
   <aside class="side">
     <div class="side-head">
       <h2>รายชื่อสมาชิก <span id="rcount"></span></h2>
+      <div class="rstat" id="rstat"></div>
       <div class="addform">
         <input type="text" id="nm" placeholder="ชื่อในเกม" maxlength="24" autocomplete="off" aria-label="ชื่อในเกม">
         <select id="jb" aria-label="อาชีพ"></select>
@@ -301,7 +313,7 @@ function seed(){
   [0,1,2,3,4].forEach(i=>a.parties[0].slots[i]=members[i].id);
   [5,6,7].forEach((m,i)=>a.parties[1].slots[i]=members[m].id);
   a.reserves=[members[15].id];
-  return {members,jobs,activities:DEFAULT_ACTS.map(x=>({...x})),teams:[a,b],active:a.id};
+  return {members,jobs,jv:JOBS_VERSION,activities:DEFAULT_ACTS.map(x=>({...x})),teams:[a,b],active:a.id};
 }
 function sanitize(s){
   const freshJobs = DEFAULT_JOBS.map(([name,role])=>({name,role}));
@@ -356,6 +368,11 @@ function colorOf(job){
 }
 function jobColorValue(j){
   return (j.color && /^#[0-9a-f]{6}$/i.test(j.color)) ? j.color : (ROLE_HEX[j.role] || ROLE_HEX.other);
+}
+function nameKey(n){ return String(n==null?'':n).normalize('NFC').trim().replace(/\s+/g,' ').toLowerCase(); }
+function nameTaken(name, exceptId){
+  const k = nameKey(name);
+  return state.members.some(m=>m.id!==exceptId && nameKey(m.name)===k);
 }
 function iconOf(job){
   const j = state.jobs.find(x=>x.name===job);
@@ -494,7 +511,7 @@ function renderMain(){
     + '<input class="tname" data-act="tname" value="'+esc(t.name)+'" maxlength="30" aria-label="ชื่อทีม">'
     + '<select class="actsel" data-act="tact" aria-label="กิจกรรม">'+actOpts+'</select>'
     + '<select class="actsel" data-act="tsize" aria-label="ขนาดทีม">'+SIZES.map(s=>'<option value="'+s+'"'+(s===t.size?' selected':'')+'>'+s+' คน ('+(s/PS)+' ปาร์ตี้)</option>').join('')+'</select></div>'
-    + '<div class="th-right"><button class="btn sm" data-act="acts">จัดการกิจกรรม</button><button class="btn sm" data-act="export">คัดลอกรายชื่อ</button><button class="btn sm" data-act="dupteam">ทำสำเนาทีม</button><button class="btn sm" data-act="clearteam">ล้างทีม</button><button class="btn sm danger" data-act="delteam">ลบทีม</button></div></div>'
+    + '<div class="th-right"><button class="btn sm" data-act="acts">จัดการกิจกรรม</button><button class="btn sm" data-act="img">บันทึกเป็นรูป</button><button class="btn sm" data-act="export">คัดลอกรายชื่อ</button><button class="btn sm" data-act="dupteam">ทำสำเนาทีม</button><button class="btn sm" data-act="clearteam">ล้างทีม</button><button class="btn sm danger" data-act="delteam">ลบทีม</button></div></div>'
     + '<div class="stats"><div class="meter"><div class="lbl"><span>ตัวจริงในทีม</span><b>'+placed.length+' / '+total+'</b></div><div class="bar"><i style="width:'+(placed.length/total*100)+'%"></i></div></div>'
     + '<div class="rolechips">'+(roleChips||'<span class="help">ยังไม่มีสมาชิกในปาร์ตี้</span>')+'</div></div>'
     + '<div class="parties">'+t.parties.slice(0,t.size/PS).map((pt,p)=>partyHtml(pt,p,byId)).join('')+'</div>'
@@ -514,9 +531,19 @@ function renderRoster(){
     if(ui.hide && inTeam.has(m.id)) return false;
     return !q || m.name.toLowerCase().includes(q) || m.job.toLowerCase().includes(q);
   });
-  $('#rcount').textContent = state.members.length + ' คน';
+  $('#rcount').textContent = '';
+  const dupK = {}; state.members.forEach(m=>{ const k = nameKey(m.name); dupK[k] = (dupK[k]||0)+1; });
+  (function(){
+    const n = state.members.length;
+    const inN = state.members.filter(m=>inTeam.has(m.id)).length;
+    const rc = {}; state.members.forEach(m=>{ const r = roleOf(m.job); rc[r] = (rc[r]||0)+1; });
+    const chips = ROLE_ORDER.filter(r=>rc[r]).map(r=>'<span class="rc"><i style="background:'+ROLE_HEX[r]+'"></i>'+ROLES[r].l+' <b>'+rc[r]+'</b></span>').join('');
+    $('#rstat').innerHTML = '<div class="rtot"><b>'+n+'</b>คนทั้งหมด</div>'
+      + '<div class="rsub">อยู่ในทีมนี้ <b>'+inN+'</b> · ยังไม่ลงทีมนี้ <b>'+(n-inN)+'</b>'+(list.length<n ? ' · แสดงอยู่ '+list.length : '')+'</div>'
+      + (chips ? '<div class="rolechips">'+chips+'</div>' : '');
+  })();
   $('#roster').innerHTML = list.length
-    ? list.map(m=>chip(m,'roster',(inTeam.has(m.id)?'<span class="tag">ในทีม</span>':'')+'<button class="icon" data-act="editmem" data-mid="'+m.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>')).join('')
+    ? list.map(m=>chip(m,'roster',(dupK[nameKey(m.name)]>1?'<span class="tag dup" title="ชื่อนี้ซ้ำกับสมาชิกคนอื่น ควรแก้ชื่อให้ไม่ซ้ำ">ชื่อซ้ำ</span>':'')+(inTeam.has(m.id)?'<span class="tag">ในทีม</span>':'')+'<button class="icon" data-act="editmem" data-mid="'+m.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>')).join('')
     : '<div class="empty-note">'+(state.members.length?'ไม่พบสมาชิกที่ตรงกับตัวกรอง':'ยังไม่มีสมาชิก · เพิ่มชื่อและอาชีพด้านบนได้เลย')+'</div>';
 }
 
@@ -643,8 +670,9 @@ document.addEventListener('dragstart', e=>{ if(e.target.closest && e.target.clos
 /* ---------- modals: members ---------- */
 function addMember(){
   if(!canEdit) return;
-  const nm = $('#nm'), name = nm.value.trim();
+  const nm = $('#nm'), name = nm.value.trim().replace(/\s+/g,' ');
   if(!name){ toast('กรอกชื่อในเกมก่อน'); nm.focus(); return; }
+  if(nameTaken(name)){ toast('มีชื่อ “'+name+'” อยู่ในรายชื่อแล้ว · เพิ่มชื่อซ้ำไม่ได้'); nm.focus(); nm.select(); return; }
   state.members.push({id:uid(), name, job:$('#jb').value});
   nm.value = ''; nm.focus();
   render();
@@ -662,8 +690,9 @@ function editMember(mid){
       }},
       {label:'ยกเลิก'},
       {label:'บันทึก',cls:'primary',fn:()=>{
-        const n = $('#em-n').value.trim();
+        const n = $('#em-n').value.trim().replace(/\s+/g,' ');
         if(!n){ toast('ชื่อต้องไม่ว่าง'); return false; }
+        if(nameTaken(n, mid)){ toast('มีชื่อ “'+n+'” อยู่ในรายชื่อแล้ว · ใช้ชื่อซ้ำไม่ได้'); return false; }
         m.name = n; m.job = $('#em-j').value; render();
       }}
     ],
@@ -675,6 +704,7 @@ function bulkAdd(){
     buttons:[{label:'ยกเลิก'},{label:'เพิ่มทั้งหมด',cls:'primary',fn:()=>{
       const lines = $('#bk').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
       let n = 0;
+      const dup = [];
       lines.forEach(line=>{
         let name, job;
         const m = line.split(/[,\t|]/);
@@ -684,13 +714,16 @@ function bulkAdd(){
           if(hit){ job = hit.name; name = line.slice(0,line.length-hit.name.length).trim(); }
           else { name = line; job = ''; }
         }
+        name = name.replace(/\s+/g,' ').slice(0,24);
         if(!name) return;
+        if(nameTaken(name)){ dup.push(name); return; }
         const found = state.jobs.find(j=>j.name.toLowerCase()===job.toLowerCase());
-        state.members.push({id:uid(), name:name.slice(0,24), job:found?found.name:(job||(state.jobs[0]||{}).name||'')});
+        state.members.push({id:uid(), name, job:found?found.name:(job||(state.jobs[0]||{}).name||'')});
         n++;
       });
-      if(!n){ toast('ไม่พบรายชื่อที่เพิ่มได้'); return false; }
-      render(); toast('เพิ่มสมาชิก '+n+' คนแล้ว');
+      if(!n){ toast(dup.length ? 'ชื่อซ้ำกับที่มีอยู่ทั้งหมด ('+dup.length+' ชื่อ) จึงไม่ได้เพิ่ม' : 'ไม่พบรายชื่อที่เพิ่มได้'); return false; }
+      render();
+      toast('เพิ่มสมาชิก '+n+' คนแล้ว'+(dup.length ? ' · ข้ามชื่อซ้ำ '+dup.length+' ชื่อ ('+dup.slice(0,3).join(', ')+(dup.length>3?'…':'')+')' : ''));
     }}],
     onOpen:()=>$('#bk').focus()});
 }
@@ -929,6 +962,272 @@ function jobsModal(){
       jl.addEventListener('click', e=>{ const d = e.target.closest('[data-jdel]'); if(d) d.closest('.jrow').remove(); });
     }});
 }
+/* ---------- export team as one image (PNG) ---------- */
+const IMG_FONT = '"Noto Sans Thai","Sarabun",system-ui,-apple-system,"Segoe UI",sans-serif';
+const IMG_HEAD = '"Prompt","Noto Sans Thai",system-ui,sans-serif';
+function hexOf(job){
+  const j = state.jobs.find(x=>x.name===job);
+  if(j && typeof j.color==='string' && /^#[0-9a-f]{6}$/i.test(j.color)) return j.color;
+  return ROLE_HEX[roleOf(job)] || ROLE_HEX.other;
+}
+function loadImg(src){
+  return new Promise(res=>{ const i = new Image(); i.onload = ()=>res(i); i.onerror = ()=>res(null); i.src = src; });
+}
+function rr(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+function fitText(ctx, text, maxW){
+  text = String(text);
+  if(ctx.measureText(text).width <= maxW) return text;
+  let s = text;
+  while(s.length > 1 && ctx.measureText(s+'…').width > maxW) s = s.slice(0, -1);
+  return s+'…';
+}
+async function renderTeamImage(t, o){
+  try{
+    await Promise.all([
+      document.fonts.load('600 18px "Noto Sans Thai"', 'ปาร์ตี้ทีม'),
+      document.fonts.load('400 14px "Noto Sans Thai"', 'ปาร์ตี้ทีม'),
+      document.fonts.load('600 18px "Prompt"', 'ปาร์ตี้ทีม')
+    ]);
+  }catch(e){}
+  const P = o.dark
+    ? {bg:'#10151f', surf:'#192130', line:'#2f3b52', ink:'#e8edf6', muted:'#96a3b8', goldbg:'#3b3322'}
+    : {bg:'#e8ecf2', surf:'#ffffff', line:'#d3dae5', ink:'#18212f', muted:'#667388', goldbg:'#fbf1d6'};
+  const GOLD = '#d9a026', GREEN = '#2fa866';
+  const act = actOf(t.activity), actCol = actColor(t.activity);
+  const mem = {}; state.members.forEach(m=>{ mem[m.id] = m; });
+
+  const nP = t.size / PS;
+  const idxs = [];
+  for(let p=0; p<nP; p++){ if(!o.hideEmpty || t.parties[p].slots.some(id=>id && mem[id])) idxs.push(p); }
+  if(!idxs.length) for(let p=0; p<nP; p++) idxs.push(p);
+  const nShow = idxs.length;
+  const cols = nShow<=4 ? nShow : (nShow<=6 ? 3 : 4);
+  const rowsP = Math.ceil(nShow / cols);
+  const SC = o.scale || 2, PAD = 28, GAP = 16, CW = 300, RH = 50, RG = 8, HEADH = 46, HLH = 30, TH = 104;
+  const cardH = HEADH + HLH + PS*(RH+RG) + 4;
+  const gridW = cols*CW + (cols-1)*GAP;
+  const tw = Math.max(gridW, 560), W = tw + PAD*2;
+  const gx = Math.round((W - gridW) / 2);
+  const resList = o.reserve ? t.reserves.filter(id=>mem[id]) : [];
+  const showRes = resList.length > 0;
+  const resRows = Math.ceil(resList.length / cols);
+  const resH = 44 + resRows*(RH+RG) + 4;
+  const H = PAD + TH + rowsP*cardH + (rowsP-1)*GAP + (showRes ? GAP+resH : 0) + (o.footer===false ? 12 : 40);
+
+  // preload job icons
+  const icons = {};
+  const jobs = new Set();
+  idxs.forEach(p=>t.parties[p].slots.forEach(id=>{ if(id && mem[id]) jobs.add(mem[id].job); }));
+  resList.forEach(id=>jobs.add(mem[id].job));
+  await Promise.all([...jobs].map(async j=>{ const src = iconOf(j); icons[j] = src ? await loadImg(src) : null; }));
+
+  const c = document.createElement('canvas');
+  c.width = W*SC; c.height = H*SC;
+  const ctx = c.getContext('2d');
+  ctx.scale(SC, SC);
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = P.bg; ctx.fillRect(0, 0, W, H);
+
+  // ---- title ----
+  const placed = [];
+  t.parties.slice(0, nP).forEach(pt=>pt.slots.forEach(id=>{ if(id && mem[id]) placed.push(mem[id]); }));
+  const rc = {}; placed.forEach(m=>{ const r = roleOf(m.job); rc[r] = (rc[r]||0)+1; });
+  ctx.textAlign = 'left';
+  ctx.font = '30px sans-serif'; ctx.fillStyle = P.ink;
+  ctx.fillText(act.icon, PAD, PAD+34);
+  ctx.font = '600 28px '+IMG_HEAD; ctx.fillStyle = P.ink;
+  ctx.fillText(fitText(ctx, t.name, tw-210), PAD+46, PAD+32);
+  ctx.font = '500 14px '+IMG_FONT; ctx.fillStyle = P.muted;
+  ctx.fillText(t.activity+' · '+(nShow<nP ? 'แสดง '+nShow+' จาก '+nP : nP)+' ปาร์ตี้', PAD+46, PAD+54);
+  ctx.textAlign = 'right';
+  ctx.font = '13px '+IMG_FONT; ctx.fillStyle = P.muted;
+  ctx.fillText('ตัวจริงในทีม', W-PAD, PAD+20);
+  ctx.font = '600 24px '+IMG_HEAD; ctx.fillStyle = placed.length===t.size ? GREEN : P.ink;
+  ctx.fillText(placed.length+' / '+t.size, W-PAD, PAD+48);
+  ctx.textAlign = 'left';
+  let cx = PAD; const cy = PAD+68;
+  ROLE_ORDER.filter(r=>rc[r]).forEach(r=>{
+    const label = ROLES[r].l+' '+rc[r];
+    ctx.font = '600 13px '+IMG_FONT;
+    const w = ctx.measureText(label).width + 38;
+    rr(ctx, cx, cy, w, 28, 14); ctx.fillStyle = P.surf; ctx.fill(); ctx.strokeStyle = P.line; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx+14, cy+14, 4.5, 0, Math.PI*2); ctx.fillStyle = ROLE_HEX[r]; ctx.fill();
+    ctx.fillStyle = P.ink; ctx.fillText(label, cx+25, cy+19);
+    cx += w + 8;
+  });
+
+  // ---- one member row ----
+  function drawMember(x, y, w, h, m, isHead){
+    rr(ctx, x, y, w, h, 9);
+    if(!m){
+      ctx.setLineDash([5,4]); ctx.strokeStyle = P.line; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = P.muted; ctx.font = '13px '+IMG_FONT; ctx.textAlign = 'center';
+      ctx.fillText('ว่าง', x+w/2, y+h/2+5); ctx.textAlign = 'left';
+      return;
+    }
+    ctx.fillStyle = P.surf; ctx.fill();
+    ctx.strokeStyle = isHead ? GOLD : P.line; ctx.lineWidth = isHead ? 2 : 1; ctx.stroke();
+    const col = hexOf(m.job);
+    ctx.save(); rr(ctx, x, y, w, h, 9); ctx.clip(); ctx.fillStyle = col; ctx.fillRect(x, y, 5, h); ctx.restore();
+    const bs = 36, bx = x+16, by = y+(h-bs)/2, im = icons[m.job];
+    if(im){ ctx.drawImage(im, bx, by, bs, bs); }
+    else {
+      rr(ctx, bx, by, bs, bs, 9); ctx.fillStyle = col+'33'; ctx.fill();
+      ctx.fillStyle = P.ink; ctx.font = '600 13px '+IMG_HEAD; ctx.textAlign = 'center';
+      ctx.fillText(abbr(m.job), bx+bs/2, by+bs/2+5); ctx.textAlign = 'left';
+    }
+    const tx = bx+bs+10, maxw = w-(tx-x)-(isHead ? 32 : 12);
+    ctx.fillStyle = P.ink; ctx.font = '600 16px '+IMG_FONT;
+    ctx.fillText(fitText(ctx, m.name, maxw), tx, y+23);
+    ctx.fillStyle = P.muted; ctx.font = '12px '+IMG_FONT;
+    ctx.fillText(fitText(ctx, m.job, maxw), tx, y+40);
+    if(isHead){ ctx.font = '16px sans-serif'; ctx.textAlign = 'right'; ctx.fillText('\uD83D\uDC51', x+w-10, y+h/2+6); ctx.textAlign = 'left'; }
+  }
+
+  // ---- parties ----
+  const top0 = PAD + TH;
+  for(let k0=0; k0<nShow; k0++){
+    const p = idxs[k0];
+    const x = gx + (k0%cols)*(CW+GAP), y = top0 + Math.floor(k0/cols)*(cardH+GAP);
+    const pt = t.parties[p], ids = pt.slots;
+    const filled = ids.filter(id=>id && mem[id]);
+    const n = filled.length;
+    const headId = (pt.head && ids.includes(pt.head) && mem[pt.head]) ? pt.head : null;
+    rr(ctx, x, y, CW, cardH, 14); ctx.fillStyle = P.surf; ctx.fill(); ctx.strokeStyle = P.line; ctx.lineWidth = 1; ctx.stroke();
+    ctx.save(); rr(ctx, x, y, CW, cardH, 14); ctx.clip(); ctx.fillStyle = n===PS ? GREEN : actCol; ctx.fillRect(x, y, CW, 5); ctx.restore();
+    // header: name, role dots, count
+    ctx.textAlign = 'right'; ctx.font = '600 13px '+IMG_FONT; ctx.fillStyle = n===PS ? GREEN : P.muted;
+    const cnt = n+'/'+PS;
+    ctx.fillText(cnt, x+CW-16, y+33);
+    let dx = x+CW-16-ctx.measureText(cnt).width-12;
+    filled.slice().reverse().forEach(id=>{
+      ctx.beginPath(); ctx.arc(dx-4, y+28, 4, 0, Math.PI*2); ctx.fillStyle = hexOf(mem[id].job); ctx.fill(); dx -= 11;
+    });
+    ctx.textAlign = 'left'; ctx.fillStyle = P.ink; ctx.font = '600 17px '+IMG_HEAD;
+    ctx.fillText(fitText(ctx, pt.name, 150), x+16, y+34);
+    if(headId){
+      rr(ctx, x+12, y+HEADH, CW-24, 24, 8); ctx.fillStyle = P.goldbg; ctx.fill();
+      ctx.fillStyle = P.ink; ctx.font = '13px '+IMG_FONT;
+      ctx.fillText(fitText(ctx, '\uD83D\uDC51 หัวหน้า: '+mem[headId].name, CW-44), x+22, y+HEADH+17);
+    }
+    for(let i=0; i<PS; i++){
+      const id = ids[i], m = id && mem[id] ? mem[id] : null;
+      drawMember(x+12, y+HEADH+HLH+i*(RH+RG), CW-24, RH, m, !!m && m.id===headId);
+    }
+  }
+
+  // ---- reserve ----
+  if(showRes){
+    const y = top0 + rowsP*cardH + (rowsP-1)*GAP + GAP;
+    rr(ctx, gx, y, gridW, resH, 14); ctx.fillStyle = P.surf; ctx.fill(); ctx.strokeStyle = P.line; ctx.lineWidth = 1; ctx.stroke();
+    ctx.save(); rr(ctx, gx, y, gridW, resH, 14); ctx.clip(); ctx.fillStyle = '#8a94a6'; ctx.fillRect(gx, y, 5, resH); ctx.restore();
+    ctx.fillStyle = P.ink; ctx.font = '600 16px '+IMG_HEAD; ctx.textAlign = 'left';
+    ctx.fillText('รายชื่อสำรอง ('+resList.length+')', gx+18, y+29);
+    const rw = (gridW-24-(cols-1)*10) / cols;
+    resList.forEach((id,k)=>{
+      drawMember(gx+12+(k%cols)*(rw+10), y+40+Math.floor(k/cols)*(RH+RG), rw, RH, mem[id], false);
+    });
+  }
+
+  // ---- footer ----
+  if(o.footer !== false){
+    ctx.textAlign = 'right'; ctx.fillStyle = P.muted; ctx.font = '12px '+IMG_FONT;
+    ctx.fillText(new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})+' · Ragnarok: The New World', W-PAD, H-20);
+  }
+  c.roBg = P.bg;
+  return c;
+}
+// stack several teams into one tall image (falls back to 1x if the canvas would get too big)
+async function renderTeamsImage(teams, o){
+  const render = async scale=>{
+    const cs = [];
+    for(let i=0; i<teams.length; i++) cs.push(await renderTeamImage(teams[i], Object.assign({}, o, {scale, footer:i===teams.length-1})));
+    return cs;
+  };
+  const dims = cs=>({w:Math.max(...cs.map(c=>c.width)), h:cs.reduce((a,c)=>a+c.height, 0)});
+  let cs = await render(2), d = dims(cs);
+  if(cs.length > 1 && (d.h > 15000 || d.w*d.h > 1.2e8)){ cs = await render(1); d = dims(cs); }
+  if(cs.length === 1) return cs[0];
+  const out = document.createElement('canvas');
+  out.width = d.w; out.height = d.h;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = cs[0].roBg; ctx.fillRect(0, 0, d.w, d.h);
+  let y = 0;
+  cs.forEach(c=>{ ctx.drawImage(c, Math.round((d.w-c.width)/2), y); y += c.height; });
+  return out;
+}
+function exportImage(){
+  const cur = {blob:null, url:null, name:'team', busy:false, again:false};
+  const cT = team();
+  const rows = state.teams.map(t=>{
+    const n = t.parties.reduce((a,p)=>a+p.slots.filter(Boolean).length, 0);
+    return '<label class="chk tpick"><input type="checkbox" data-tid="'+esc(t.id)+'"'+(t.id===cT.id?' checked':'')+'><span>'+esc(actOf(t.activity).icon)+' '+esc(t.name)+'</span>'
+      +'<small>'+n+'/'+t.size+(t.reserves.length?' · สำรอง '+t.reserves.length:'')+'</small></label>';
+  }).join('');
+  const chosen = ()=>{
+    const ids = new Set([...document.querySelectorAll('#modal [data-tid]')].filter(i=>i.checked).map(i=>i.dataset.tid));
+    return state.teams.filter(t=>ids.has(t.id));
+  };
+  const draw = async ()=>{
+    if(cur.busy){ cur.again = true; return; }
+    cur.busy = true;
+    const box = $('#im-box');
+    try{
+      const teams = chosen();
+      if(!teams.length){
+        cur.blob = null; box.textContent = 'เลือกอย่างน้อย 1 ทีมก่อน';
+      } else {
+        box.textContent = 'กำลังสร้างรูป…';
+        const canvas = await renderTeamsImage(teams, {reserve:$('#im-res').checked, dark:$('#im-dark').checked, hideEmpty:$('#im-empty').checked});
+        const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
+        cur.blob = blob;
+        cur.name = teams.length===1 ? teams[0].name : 'ทีมรวม-'+teams.length+'ทีม';
+        if(cur.url) URL.revokeObjectURL(cur.url);
+        cur.url = URL.createObjectURL(blob);
+        box.innerHTML = '<img alt="ภาพทีม" src="'+cur.url+'" style="max-width:100%;border-radius:10px;border:1px solid var(--line)">';
+      }
+    }catch(e){ cur.blob = null; box.textContent = 'สร้างรูปไม่สำเร็จ'; }
+    cur.busy = false;
+    if(cur.again){ cur.again = false; draw(); }
+  };
+  modal({title:'บันทึกทีมเป็นรูปภาพ',
+    html:'<div class="dsec"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><b>เลือกทีมที่จะรวมในรูปเดียว</b>'
+      +'<span style="display:flex;gap:6px"><button class="btn sm" id="im-all">เลือกทั้งหมด</button><button class="btn sm" id="im-none">ล้าง</button></span></div>'
+      +'<div class="tlist">'+rows+'</div></div>'
+      +'<div class="row" style="flex-wrap:wrap;gap:6px 18px"><label class="chk"><input type="checkbox" id="im-res"'+(cT.reserves.length?' checked':'')+'> แสดงรายชื่อสำรอง</label><label class="chk"><input type="checkbox" id="im-empty"> ซ่อนปาร์ตี้ที่ยังว่างทั้งหมด</label><label class="chk"><input type="checkbox" id="im-dark"> พื้นหลังมืด</label></div>'
+      +'<div id="im-box" style="text-align:center;color:var(--muted)">กำลังสร้างรูป…</div>',
+    buttons:[
+      {label:'ปิด'},
+      {label:'คัดลอกรูป', fn:async ()=>{
+        if(!cur.blob) return false;
+        try{ await navigator.clipboard.write([new ClipboardItem({'image/png':cur.blob})]); toast('คัดลอกรูปแล้ว · วางในแชทได้เลย'); }
+        catch(e){ toast('เบราว์เซอร์นี้คัดลอกรูปไม่ได้ · ใช้ปุ่มดาวน์โหลดแทน'); }
+        return false;
+      }},
+      {label:'ดาวน์โหลด PNG', cls:'primary', fn:()=>{
+        if(!cur.blob) return false;
+        saveFile((cur.name.replace(/[\\/:*?"<>|]+/g,'_') || 'team')+'-'+stamp()+'.png', cur.blob);
+        return false;
+      }}
+    ],
+    onOpen:(ov)=>{
+      ov.querySelector('.dlg').style.width = 'min(1000px,100%)';
+      ov.querySelectorAll('[data-tid]').forEach(i=>{ i.onchange = draw; });
+      $('#im-all').onclick = ()=>{ ov.querySelectorAll('[data-tid]').forEach(i=>{ i.checked = true; }); draw(); };
+      $('#im-none').onclick = ()=>{ ov.querySelectorAll('[data-tid]').forEach(i=>{ i.checked = false; }); draw(); };
+      $('#im-res').onchange = draw; $('#im-dark').onchange = draw; $('#im-empty').onchange = draw;
+      draw();
+    }});
+}
+
 /* ---------- export / import (JSON + Excel) ---------- */
 function roleKey(v){
   v = String(v||'').trim().toLowerCase();
@@ -1039,10 +1338,10 @@ function mergeIncoming(inc){
   (inc.activities||[]).forEach(a=>{
     if(a && a.name && !state.activities.some(x=>x.name.toLowerCase()===a.name.toLowerCase())){ state.activities.push({name:a.name, icon:a.icon||'⭐'}); added.acts++; }
   });
-  const key = (n,j)=>n.toLowerCase()+'|'+j.toLowerCase();
+  const key = (n,j)=>nameKey(n);
   const idx = {}; state.members.forEach(m=>{ idx[key(m.name,m.job)] = m.id; });
   const getId = (n,j)=>{
-    n = String(n||'').trim(); j = String(j||'').trim();
+    n = String(n||'').trim().replace(/\s+/g,' ').slice(0,24); j = String(j||'').trim();
     if(!n) return null;
     if(!j) j = (state.jobs[0]||{}).name || '';
     const k = key(n,j);
@@ -1125,7 +1424,7 @@ function dataModal(){
 document.addEventListener('click', e=>{
   const b = e.target.closest('button[data-act]'); if(!b) return;
   const d = b.dataset, t = team();
-  if(!canEdit && !['tab','export','theme','data','login','logout'].includes(d.act)) return;
+  if(!canEdit && !['tab','export','img','theme','data','login','logout'].includes(d.act)) return;
   switch(d.act){
     case 'addmem': addMember(); break;
     case 'bulk': bulkAdd(); break;
@@ -1147,6 +1446,7 @@ document.addEventListener('click', e=>{
     case 'pickres':
       if(t.reserves.length>=MAXRES){ toast('รายชื่อสำรองเต็มแล้ว (สูงสุด '+MAXRES+' คน)'); break; }
       openPick({type:'reserve'}); break;
+    case 'img': exportImage(); break;
     case 'login': loginModal(); break;
     case 'logout': doLogout(); break;
     case 'jobs': jobsModal(); break;
