@@ -181,6 +181,24 @@ textarea{resize:vertical;font-size:13px}
 .arow .ai{text-align:center}
 .dsec{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
 .dsec .help{margin:0}
+.side-head .row{flex-wrap:wrap}
+.locs{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.loc{font:inherit;font-size:11px;line-height:1.35;padding:1px 7px;border-radius:99px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.loc:hover{border-color:var(--brand)}
+.loc.none{color:var(--muted);border-style:dashed;cursor:default;background:transparent}
+.loc.more{cursor:default;color:var(--muted)}
+.loc.bad{border-color:var(--danger);color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,var(--surface))}
+.rc.warnbtn{font:inherit;font-size:12.5px;cursor:pointer;color:var(--danger);border-color:var(--danger)}
+.ckrow{display:grid;grid-template-columns:170px 1fr;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.ckrow.bad{border-left:4px solid var(--danger)}
+.ckn{display:flex;flex-direction:column;min-width:0}
+.ckn small{color:var(--muted)}
+.ckl{display:flex;flex-direction:column;gap:5px}
+.ckg{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:12.5px}
+.ckg .loc{font-size:12px}
+.party.flash{animation:flashp 1.1s ease-in-out 2}
+@keyframes flashp{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:0 0 0 4px var(--brand)}}
+@media (max-width:600px){.ckrow{grid-template-columns:1fr}}
 .tlist{display:flex;flex-direction:column;gap:4px;max-height:190px;overflow:auto}
 .tpick{display:flex;align-items:center;gap:8px;padding:5px 9px;border-radius:8px;background:var(--surface);border:1px solid var(--line);color:var(--ink);cursor:pointer}
 .tpick small{margin-left:auto;color:var(--muted);font-size:12px}
@@ -241,8 +259,10 @@ textarea{resize:vertical;font-size:13px}
       </div>
       <div class="row">
         <button class="btn sm" data-act="bulk">เพิ่มหลายคนพร้อมกัน</button>
+        <button class="btn sm" data-act="check">ตรวจสอบตำแหน่งสมาชิก</button>
       </div>
       <input type="search" id="q" placeholder="ค้นหาชื่อหรืออาชีพ" aria-label="ค้นหา">
+      <select id="rf" aria-label="กรองตามตำแหน่ง"></select>
       <label class="chk"><input type="checkbox" id="hide"> ซ่อนคนที่อยู่ในทีมนี้แล้ว</label>
     </div>
     <div class="roster-list" id="roster" data-drop="roster"></div>
@@ -297,8 +317,9 @@ const newTeam = (name, activity) => ({id:uid(), name, activity, size:PS*NP, part
 /* ---------- state ---------- */
 let state = blankState();
 let canEdit = false;
-let ui = {q:'', hide:false};
+let ui = {q:'', hide:false, filter:'all'};
 let byId = {};
+let plc = {};   // memberId -> where this member is placed (all teams)
 
 function seed(){
   const jobs = DEFAULT_JOBS.map(([name,role])=>({name,role}));
@@ -448,12 +469,116 @@ function jobOptions(sel){
 }
 
 /* ---------- rendering ---------- */
-function chip(m, kind, extra){
+/* ---------- where is each member placed? (all teams / activities) ---------- */
+function placements(){
+  const map = {};
+  state.teams.forEach(t=>{
+    t.parties.slice(0, t.size/PS).forEach((pt,p)=>pt.slots.forEach((id,i)=>{
+      if(id) (map[id] = map[id] || []).push({tid:t.id, team:t.name, act:t.activity, kind:'slot', p, party:pt.name, i});
+    }));
+    t.reserves.forEach(id=>{ (map[id] = map[id] || []).push({tid:t.id, team:t.name, act:t.activity, kind:'reserve'}); });
+  });
+  return map;
+}
+// activities in which the member sits in more than one team = probably entered twice
+function conflictsOf(list){
+  const by = {};
+  list.forEach(x=>{ (by[x.act] = by[x.act] || new Set()).add(x.tid); });
+  return Object.keys(by).filter(a=>by[a].size>1);
+}
+function passFilter(m){
+  const L = plc[m.id] || [], f = ui.filter || 'all';
+  if(f==='all') return true;
+  if(f==='none') return L.length===0;
+  if(f==='placed') return L.length>0;
+  if(f==='multi') return new Set(L.map(x=>x.tid)).size>1;
+  if(f==='dup') return conflictsOf(L).length>0;
+  if(f.indexOf('free:')===0){ const a = f.slice(5); return !L.some(x=>x.act===a); }
+  return true;
+}
+function filterOptions(){
+  return [['all','ทั้งหมด'],['none','ยังไม่ลงทีมไหนเลย'],['placed','ลงทีมแล้ว (อย่างน้อย 1 ที่)'],['multi','อยู่หลายทีม'],['dup','⚠ ซ้ำในกิจกรรมเดียวกัน']]
+    .concat(state.activities.map(a=>['free:'+a.name, 'ยังไม่ได้ลง '+a.name]));
+}
+function locBtn(x, bad, long){
+  const label = (long ? '' : actOf(x.act).icon+' ')+x.team+' · '+(x.kind==='slot' ? x.party : 'สำรอง');
+  return '<button class="loc'+(bad?' bad':'')+'" data-act="goto" data-tid="'+esc(x.tid)+'" data-p="'+(x.kind==='slot'?x.p:'')+'" title="'
+    + esc(x.act+' · '+x.team+' · '+(x.kind==='slot'?x.party:'สำรอง')+(bad?' (ซ้ำกับทีมอื่นในกิจกรรมเดียวกัน)':'')+' · กดเพื่อไปที่นั่น')+'">'+esc(label)+'</button>';
+}
+function locTags(id, max){
+  const L = plc[id] || [];
+  if(!L.length) return '<span class="locs"><span class="loc none">ยังไม่ลงทีมไหน</span></span>';
+  const bad = new Set(conflictsOf(L)), show = L.slice(0, max||3);
+  return '<span class="locs">'+show.map(x=>locBtn(x, bad.has(x.act))).join('')
+    + (L.length>show.length ? '<span class="loc more" title="'+esc(L.slice(show.length).map(x=>x.team+' · '+(x.kind==='slot'?x.party:'สำรอง')).join(', '))+'">+'+(L.length-show.length)+'</span>' : '')+'</span>';
+}
+function dupWarn(id){
+  const t = team();
+  const o = (plc[id]||[]).filter(x=>x.act===t.activity && x.tid!==t.id);
+  if(!o.length) return '';
+  return '<span class="tag dup" title="'+esc('อยู่ในทีมอื่นของกิจกรรม '+t.activity+' ด้วย: '+o.map(x=>x.team+' · '+(x.kind==='slot'?x.party:'สำรอง')).join(', '))+'">ซ้ำ</span>';
+}
+function warnPlaced(mid){
+  const t = team(), m = byId[mid]; if(!m) return;
+  const o = (placements()[mid]||[]).filter(x=>x.act===t.activity && x.tid!==t.id);
+  if(o.length) toast('⚠ '+m.name+' อยู่ที่ '+o.map(x=>x.team).join(', ')+' (กิจกรรม '+t.activity+') แล้ว · ชื่อซ้ำกัน');
+}
+function flashParty(p){
+  if(p===''||p==null) return;
+  const el = document.querySelector('.party[data-p="'+p+'"]'); if(!el) return;
+  el.classList.add('flash');
+  try{ el.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){}
+  setTimeout(()=>el.classList.remove('flash'), 2600);
+}
+function checkModal(f0){
+  const cur = {f:f0||'all', q:''};
+  const total = state.members.length;
+  const cnt = {none:0, placed:0, multi:0, dup:0};
+  state.members.forEach(m=>{
+    const L = plc[m.id]||[];
+    if(!L.length) cnt.none++; else cnt.placed++;
+    if(new Set(L.map(x=>x.tid)).size>1) cnt.multi++;
+    if(conflictsOf(L).length) cnt.dup++;
+  });
+  const chipBtn = (f,label,n,warn)=>'<button class="rc'+(warn&&n?' warnbtn':'')+'" data-ckf="'+f+'" style="font:inherit;font-size:12.5px;cursor:pointer">'+label+' <b>'+n+'</b></button>';
+  const sum = '<div class="rolechips">'+chipBtn('all','ทั้งหมด',total)+chipBtn('placed','ลงทีมแล้ว',cnt.placed)+chipBtn('none','ยังไม่ลงทีมไหน',cnt.none)+chipBtn('multi','อยู่หลายทีม',cnt.multi)+chipBtn('dup','⚠ ซ้ำในกิจกรรมเดียวกัน',cnt.dup,true)+'</div>';
+  const row = m=>{
+    const L = plc[m.id]||[], bad = new Set(conflictsOf(L)), by = {};
+    L.forEach(x=>{ (by[x.act] = by[x.act] || []).push(x); });
+    const groups = Object.keys(by).map(a=>'<div class="ckg"><b>'+esc(actOf(a).icon+' '+a)+'</b>'+by[a].map(x=>locBtn(x, bad.has(a), true)).join('')+(bad.has(a)?'<span class="tag dup">ซ้ำ</span>':'')+'</div>').join('');
+    return '<div class="ckrow'+(bad.size?' bad':'')+'"><div class="ckn"><b>'+esc(m.name)+'</b><small>'+esc(m.job)+'</small></div><div class="ckl">'+(groups || '<span class="loc none">ยังไม่ลงทีมไหน</span>')+'</div></div>';
+  };
+  modal({title:'ตรวจสอบตำแหน่งสมาชิก',
+    html:sum+'<p class="help">ซ้ำ = ชื่อเดียวกันอยู่หลายทีมที่เป็นกิจกรรมเดียวกัน (อยู่คนละกิจกรรมไม่นับว่าซ้ำ) กดชื่อทีมเพื่อไปดูที่ตำแหน่งนั้น</p>'
+      +'<div class="row"><input type="search" id="ck-q" placeholder="ค้นหาชื่อหรืออาชีพ"><select id="ck-f" style="width:auto;min-width:190px"></select></div>'
+      +'<div class="pick-list" id="ck-list" style="max-height:52vh"></div>',
+    buttons:[{label:'ปิด'}],
+    onOpen:(ov)=>{
+      ov.querySelector('.dlg').style.width = 'min(860px,100%)';
+      const sel = $('#ck-f');
+      sel.innerHTML = filterOptions().map(([v,l])=>'<option value="'+esc(v)+'">'+esc(l)+'</option>').join('');
+      const draw = ()=>{
+        sel.value = cur.f; if(sel.value!==cur.f){ cur.f = 'all'; sel.value = 'all'; }
+        const q = cur.q.trim().toLowerCase(), keep = ui.filter;
+        ui.filter = cur.f;
+        let ms = state.members.filter(m=>passFilter(m) && (!q || m.name.toLowerCase().includes(q) || m.job.toLowerCase().includes(q)));
+        ui.filter = keep;
+        ms = ms.slice().sort((a,b)=>conflictsOf(plc[b.id]||[]).length - conflictsOf(plc[a.id]||[]).length);
+        $('#ck-list').innerHTML = ms.length ? ms.map(row).join('') : '<div class="empty-note">ไม่พบสมาชิกที่ตรงกับตัวกรอง</div>';
+      };
+      sel.onchange = ()=>{ cur.f = sel.value; draw(); };
+      $('#ck-q').oninput = e=>{ cur.q = e.target.value; draw(); };
+      ov.querySelectorAll('[data-ckf]').forEach(b=>{ b.onclick = ()=>{ cur.f = b.dataset.ckf; draw(); }; });
+      draw();
+    }});
+}
+
+function chip(m, kind, extra, sub){
   const r = ROLES[roleOf(m.job)];
   return '<div class="mem" data-drag="'+kind+'" data-mid="'+m.id+'" style="--rc:'+colorOf(m.job)+'" title="'+esc(m.name)+' · '+esc(m.job)+' · '+r.l+'">'
     + '<span class="grip" aria-hidden="true">⋮⋮</span>'
     + (iconOf(m.job) ? '<span class="badge has-img"><img src="'+esc(iconOf(m.job))+'" alt="" draggable="false"></span>' : '<span class="badge">'+esc(abbr(m.job))+'</span>')
-    + '<span class="mt"><b>'+esc(m.name)+'</b><small>'+esc(m.job)+'</small></span>'
+    + '<span class="mt"><b>'+esc(m.name)+'</b><small>'+esc(m.job)+'</small>'+(sub||'')+'</span>'
     + (extra||'') + '</div>';
 }
 
@@ -474,7 +599,7 @@ function partyHtml(pt, p, byId){
   const slots = pt.slots.map((id,i)=>{
     const m = ms[i];
     const inner = m
-      ? chip(m,'slot','<button class="icon x" data-act="rmslot" data-p="'+p+'" data-i="'+i+'" title="นำออกจากปาร์ตี้" aria-label="นำออก">✕</button>')
+      ? chip(m,'slot',dupWarn(m.id)+'<button class="icon x" data-act="rmslot" data-p="'+p+'" data-i="'+i+'" title="นำออกจากปาร์ตี้" aria-label="นำออก">✕</button>')
       : (canEdit ? '<button class="empty" data-act="pick" data-p="'+p+'" data-i="'+i+'">＋ เลือกสมาชิก</button>' : '<div class="empty" style="display:grid;place-items:center">ว่าง</div>');
     return '<div class="slot'+(m&&m.id===head?' is-head':'')+'" data-drop="slot" data-p="'+p+'" data-i="'+i+'">'
       + (m ? '<button class="crown'+(m.id===head?' on':'')+'" data-act="head" data-p="'+p+'" data-i="'+i+'" title="'+(m.id===head?'เป็นหัวหน้าปาร์ตี้ (กดเพื่อยกเลิก)':'ตั้งเป็นหัวหน้าปาร์ตี้ (คนตั้ง)')+'" aria-label="ตั้งเป็นหัวหน้าปาร์ตี้">👑</button>' : '<span class="no" style="width:22px">'+(i+1)+'</span>')
@@ -497,11 +622,13 @@ function renderMain(){
   placed.forEach(m=>{ const r=roleOf(m.job); rc[r]=(rc[r]||0)+1; });
   const roleChips = ROLE_ORDER.filter(r=>rc[r]).map(r=>'<span class="rc"><i style="background:'+ROLES[r].c+'"></i>'+ROLES[r].l+' <b>'+rc[r]+'</b></span>').join('');
 
+  const dupN = placed.filter(m=>(plc[m.id]||[]).some(x=>x.act===t.activity && x.tid!==t.id)).length;
+  const warnChip = dupN ? '<button class="rc warnbtn" data-act="check" data-f="dup" title="ดูรายชื่อที่ซ้ำ">⚠ ชื่อซ้ำกับทีมอื่นในกิจกรรมเดียวกัน <b>'+dupN+'</b></button>' : '';
   const actOpts = state.activities.map(a=>'<option value="'+esc(a.name)+'"'+(a.name===t.activity?' selected':'')+'>'+esc(a.icon+' '+a.name)+'</option>').join('')
     + '<option value="__new">＋ เพิ่มกิจกรรมใหม่…</option>';
 
   const reserveHtml = t.reserves.length
-    ? '<div class="res-list">'+t.reserves.map(id=>byId[id]?chip(byId[id],'reserve','<button class="icon x" data-act="rmres" data-mid="'+id+'" title="นำออกจากสำรอง" aria-label="นำออก">✕</button>'):'').join('')+'</div>'
+    ? '<div class="res-list">'+t.reserves.map(id=>byId[id]?chip(byId[id],'reserve',dupWarn(id)+'<button class="icon x" data-act="rmres" data-mid="'+id+'" title="นำออกจากสำรอง" aria-label="นำออก">✕</button>'):'').join('')+'</div>'
     : '<div class="res-empty">ยังไม่มีรายชื่อสำรอง · ลากสมาชิกมาวางที่นี่ได้เลย</div>';
 
   $('#main').innerHTML =
@@ -513,7 +640,7 @@ function renderMain(){
     + '<select class="actsel" data-act="tsize" aria-label="ขนาดทีม">'+SIZES.map(s=>'<option value="'+s+'"'+(s===t.size?' selected':'')+'>'+s+' คน ('+(s/PS)+' ปาร์ตี้)</option>').join('')+'</select></div>'
     + '<div class="th-right"><button class="btn sm" data-act="acts">จัดการกิจกรรม</button><button class="btn sm" data-act="img">บันทึกเป็นรูป</button><button class="btn sm" data-act="export">คัดลอกรายชื่อ</button><button class="btn sm" data-act="dupteam">ทำสำเนาทีม</button><button class="btn sm" data-act="clearteam">ล้างทีม</button><button class="btn sm danger" data-act="delteam">ลบทีม</button></div></div>'
     + '<div class="stats"><div class="meter"><div class="lbl"><span>ตัวจริงในทีม</span><b>'+placed.length+' / '+total+'</b></div><div class="bar"><i style="width:'+(placed.length/total*100)+'%"></i></div></div>'
-    + '<div class="rolechips">'+(roleChips||'<span class="help">ยังไม่มีสมาชิกในปาร์ตี้</span>')+'</div></div>'
+    + '<div class="rolechips">'+(roleChips||'<span class="help">ยังไม่มีสมาชิกในปาร์ตี้</span>')+warnChip+'</div></div>'
     + '<div class="parties">'+t.parties.slice(0,t.size/PS).map((pt,p)=>partyHtml(pt,p,byId)).join('')+'</div>'
     + '<section class="reserve" data-drop="reserve"><header><h3>รายชื่อสำรอง <small>'+t.reserves.length+'/'+MAXRES+' · เผื่อมีคนไม่มา</small></h3>'
     + '<button class="btn sm" data-act="pickres">＋ เพิ่มสำรอง</button></header>'+reserveHtml+'</section></div>';
@@ -525,10 +652,14 @@ function renderMain(){
 
 function renderRoster(){
   const t = team();
+  const rf = $('#rf'), opts = filterOptions(), sig = JSON.stringify(opts);
+  if(rf.dataset.sig !== sig){ rf.innerHTML = opts.map(([v,l])=>'<option value="'+esc(v)+'">'+esc(l)+'</option>').join(''); rf.dataset.sig = sig; }
+  rf.value = ui.filter; if(rf.value !== ui.filter){ ui.filter = 'all'; rf.value = 'all'; }
   const inTeam = new Set(teamIds(t));
   const q = ui.q.trim().toLowerCase();
   const list = state.members.filter(m=>{
     if(ui.hide && inTeam.has(m.id)) return false;
+    if(!passFilter(m)) return false;
     return !q || m.name.toLowerCase().includes(q) || m.job.toLowerCase().includes(q);
   });
   $('#rcount').textContent = '';
@@ -543,12 +674,13 @@ function renderRoster(){
       + (chips ? '<div class="rolechips">'+chips+'</div>' : '');
   })();
   $('#roster').innerHTML = list.length
-    ? list.map(m=>chip(m,'roster',(dupK[nameKey(m.name)]>1?'<span class="tag dup" title="ชื่อนี้ซ้ำกับสมาชิกคนอื่น ควรแก้ชื่อให้ไม่ซ้ำ">ชื่อซ้ำ</span>':'')+(inTeam.has(m.id)?'<span class="tag">ในทีม</span>':'')+'<button class="icon" data-act="editmem" data-mid="'+m.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>')).join('')
+    ? list.map(m=>chip(m,'roster',(dupK[nameKey(m.name)]>1?'<span class="tag dup" title="ชื่อนี้ซ้ำกับสมาชิกคนอื่น ควรแก้ชื่อให้ไม่ซ้ำ">ชื่อซ้ำ</span>':'')+(inTeam.has(m.id)?'<span class="tag">ในทีม</span>':'')+'<button class="icon" data-act="editmem" data-mid="'+m.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>', locTags(m.id, 3))).join('')
     : '<div class="empty-note">'+(state.members.length?'ไม่พบสมาชิกที่ตรงกับตัวกรอง':'ยังไม่มีสมาชิก · เพิ่มชื่อและอาชีพด้านบนได้เลย')+'</div>';
 }
 
 function render(){
   byId = {}; state.members.forEach(m=>byId[m.id]=m);
+  plc = placements();
   const sel = $('#jb'), keep = sel.value;
   sel.innerHTML = jobOptions(keep || (state.jobs[0]||{}).name);
   renderRoster();
@@ -659,7 +791,7 @@ document.addEventListener('pointerup', e=>{
     const mid = drag.mid, src = drag.src;
     endDrag();
     if(tg && !(tg.type==='roster' && src==='roster')){
-      drop(mid, tg);
+      if(drop(mid, tg)) warnPlaced(mid);
       render();
     }
   } else endDrag();
@@ -743,7 +875,7 @@ function openPick(target){
       $('#pq').addEventListener('input', draw);
       $('#pl').addEventListener('click', e=>{
         const b = e.target.closest('[data-pick]'); if(!b) return;
-        if(drop(b.dataset.pick, target)){ closeModal(); render(); }
+        if(drop(b.dataset.pick, target)){ closeModal(); warnPlaced(b.dataset.pick); render(); }
       });
       $('#pq').focus();
     }});
@@ -1424,7 +1556,7 @@ function dataModal(){
 document.addEventListener('click', e=>{
   const b = e.target.closest('button[data-act]'); if(!b) return;
   const d = b.dataset, t = team();
-  if(!canEdit && !['tab','export','img','theme','data','login','logout'].includes(d.act)) return;
+  if(!canEdit && !['tab','export','img','theme','data','login','logout','goto','check'].includes(d.act)) return;
   switch(d.act){
     case 'addmem': addMember(); break;
     case 'bulk': bulkAdd(); break;
@@ -1446,6 +1578,10 @@ document.addEventListener('click', e=>{
     case 'pickres':
       if(t.reserves.length>=MAXRES){ toast('รายชื่อสำรองเต็มแล้ว (สูงสุด '+MAXRES+' คน)'); break; }
       openPick({type:'reserve'}); break;
+    case 'goto':
+      if(state.teams.some(x=>x.id===d.tid)){ closeModal(); state.active = d.tid; render(); flashParty(d.p); }
+      break;
+    case 'check': checkModal(d.f); break;
     case 'img': exportImage(); break;
     case 'login': loginModal(); break;
     case 'logout': doLogout(); break;
@@ -1478,6 +1614,7 @@ document.addEventListener('keydown', e=>{
 });
 $('#q').addEventListener('input', e=>{ ui.q = e.target.value; renderRoster(); });
 $('#hide').addEventListener('change', e=>{ ui.hide = e.target.checked; renderRoster(); });
+$('#rf').addEventListener('change', e=>{ ui.filter = e.target.value; renderRoster(); });
 
 /* ---------- shared database (Firebase) + admin login ---------- */
 const cloud = {mode:'loading', fs:null, auth:null, user:null, ready:false, sid:uid(), lastCore:'', lastIcons:'{}', remoteExists:false, pendingCore:null, pendingIcons:null, saveTimer:null, applyTimer:null, saving:false};
