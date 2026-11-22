@@ -181,6 +181,26 @@ textarea{resize:vertical;font-size:13px}
 .arow .ai{text-align:center}
 .dsec{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2)}
 .dsec .help{margin:0}
+.viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 8px;font-size:12.5px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:5px 12px;font-size:12.5px;color:var(--ink)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--brand);color:var(--brand-ink);font-weight:600}
+.tabs.teams.sticky{position:sticky;top:calc(6px + env(safe-area-inset-top,0px));z-index:30;box-shadow:0 6px 16px rgba(0,0,0,.14)}
+.teamsec{scroll-margin-top:90px}
+.teamsec + .teamsec{margin-top:36px;padding-top:28px;border-top:2px dashed var(--line)}
+.acthead{display:flex;align-items:center;gap:10px;margin:26px 0 16px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--act);border-radius:12px;scroll-margin-top:90px}
+.acthead h2{font-size:18px}
+.acthead small{color:var(--muted);margin-right:auto}
+.actsec .teamsec:first-of-type{margin-top:0}
+.tabs.acts .tab{font-weight:600;padding:8px 14px}
+.tabs.teams{margin:-2px 0 12px;padding:7px 9px 9px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;align-items:center}
+.tabs.teams .tab{padding:5px 11px;font-size:13px;border-radius:8px;border-bottom-width:2px}
+.tlabel{flex:none;font-size:12px;color:var(--muted);margin-right:4px;white-space:nowrap}
+.empty-act{background:var(--surface);border:1px dashed var(--line);border-top:5px solid var(--act);border-radius:14px;padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.empty-act h3{font-size:17px}
+.empty-act .act-ico{font-size:34px;line-height:1}
+.ro [data-act="acts"]{display:none!important}
 .side-head .row{flex-wrap:wrap}
 .locs{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 .loc{font:inherit;font-size:11px;line-height:1.35;padding:1px 7px;border-radius:99px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
@@ -210,6 +230,25 @@ textarea{resize:vertical;font-size:13px}
 .ro .adm-only{display:none!important}
 .ro .addform,.ro [data-act="bulk"],.ro [data-act="editmem"],.ro [data-act="rmslot"],.ro [data-act="rmres"],.ro [data-act="pickres"],.ro [data-act="dupteam"],.ro [data-act="clearteam"],.ro [data-act="delteam"],.ro [data-act="newteam"],.ro [data-act="jobs"],.ro .grip{display:none!important}
 .ro .crown{pointer-events:none}
+.ro [data-act="rand"],.ro [data-act="randp"]{display:none!important}
+.rslot{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface)}
+.rhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rroles{display:flex;gap:5px;flex-wrap:wrap}
+.rchip{position:relative;cursor:pointer}
+.rchip input{position:absolute;opacity:0;pointer-events:none}
+.rchip span{display:inline-block;padding:2px 11px;border-radius:99px;border:1px solid var(--line);font-size:12.5px;background:var(--surface2);color:var(--ink)}
+.rchip input:checked + span{background:var(--c);border-color:var(--c);color:#fff;font-weight:600}
+.rchip input:focus-visible + span{outline:2px solid var(--brand);outline-offset:2px}
+.rjobs summary{cursor:pointer;font-size:12.5px;color:var(--muted);margin-top:6px}
+.jobgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:4px 10px;padding:8px 2px 2px}
+.jchk{display:flex;gap:6px;align-items:center;font-size:12.5px}
+.ptlist{display:flex;gap:6px;flex-wrap:wrap}
+.rprev{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.rpcard{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface)}
+.rrow{font-size:13px;padding:2px 0}
+.rrow small{color:var(--muted)}
+.rrow.dim{color:var(--muted)}
+.rrow.none{color:var(--danger)}
 .ro .crown:not(.on){visibility:hidden}
 .ro .mem{cursor:default}
 .ro .empty{pointer-events:none;border-style:dotted}
@@ -317,25 +356,11 @@ const newTeam = (name, activity) => ({id:uid(), name, activity, size:PS*NP, part
 /* ---------- state ---------- */
 let state = blankState();
 let canEdit = false;
-let ui = {q:'', hide:false, filter:'all'};
+let ui = {q:'', hide:false, filter:'all', act:null, last:{}, view:'tab', scrollTo:null};
+try{ const v = localStorage.getItem('ro-tnw-view'); if(v==='tab'||v==='scroll'||v==='all') ui.view = v; }catch(e){}
 let byId = {};
 let plc = {};   // memberId -> where this member is placed (all teams)
 
-function seed(){
-  const jobs = DEFAULT_JOBS.map(([name,role])=>({name,role}));
-  const raw = [
-    ['Aomsin','Royal Guard'],['Bank','Rune Knight'],['Cream','Arch Bishop'],['Dew','Warlock'],['Earth','Ranger'],
-    ['Fern','Minstrel'],['Gun','Guillotine Cross'],['Honey','Arch Bishop'],['Ice','Sorcerer'],['Jazz','Sura'],
-    ['Kong','Royal Guard'],['Lalita','Shadow Chaser'],['Mook','Genetic'],['Namtan','Wanderer'],['Oat','Mechanic'],['Pang','Warlock']
-  ];
-  const members = raw.map(([name,job])=>({id:uid(),name,job:JM[job]||job}));
-  const a = newTeam('ทีม A','Guild League');
-  const b = newTeam('ทีม B','ชิงปราสาท');
-  [0,1,2,3,4].forEach(i=>a.parties[0].slots[i]=members[i].id);
-  [5,6,7].forEach((m,i)=>a.parties[1].slots[i]=members[m].id);
-  a.reserves=[members[15].id];
-  return {members,jobs,jv:JOBS_VERSION,activities:DEFAULT_ACTS.map(x=>({...x})),teams:[a,b],active:a.id};
-}
 function sanitize(s){
   const freshJobs = DEFAULT_JOBS.map(([name,role])=>({name,role}));
   if(s.jv !== JOBS_VERSION){
@@ -357,18 +382,18 @@ function sanitize(s){
     t.reserves = (t.reserves||[]).filter(id=>ids.has(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAXRES);
     if(!s.activities.some(a=>a.name===t.activity)) s.activities.push({name:t.activity||'อื่นๆ',icon:'⭐'});
   });
-  if(!s.teams.find(t=>t.id===s.active)) s.active = s.teams[0].id;
+  if(!s.teams.find(t=>t.id===s.active)) s.active = s.teams[0] ? s.teams[0].id : null;
   return s;
 }
 function load(){
   try{
     const s = JSON.parse(localStorage.getItem(KEY));
-    if(s && Array.isArray(s.members) && Array.isArray(s.teams) && s.teams.length) return sanitize(s);
+    if(s && Array.isArray(s.members) && Array.isArray(s.teams)) return sanitize(s);
   }catch(e){}
-  return seed();
+  return blankState();
 }
 function save(){
-  if(!canEdit || !cloud.ready) return;
+  if(!canEdit || !cloud.ready || cloud.hold) return;
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}   // local copy (primary in single-device mode, backup otherwise)
   if(cloud.mode!=='firebase') return;
   clearTimeout(cloud.saveTimer);
@@ -378,6 +403,26 @@ function save(){
 
 /* ---------- lookups ---------- */
 const team = () => state.teams.find(t=>t.id===state.active) || state.teams[0];
+// the team that is actually on screen (null when the selected activity has no team yet)
+function shownTeam(){
+  const t = state.teams.find(x=>x.id===state.active);
+  return (t && t.activity===ui.act) ? t : null;
+}
+function selectTeam(id){
+  const t = state.teams.find(x=>x.id===id); if(!t) return;
+  state.active = id; ui.act = t.activity; ui.last[t.activity] = id;
+}
+function normalizeView(){
+  if(!state.activities.some(a=>a.name===ui.act)){
+    const t = state.teams.find(x=>x.id===state.active);
+    ui.act = t ? t.activity : state.activities[0].name;
+  }
+  const cur = state.teams.find(x=>x.id===state.active);
+  if(!cur || cur.activity!==ui.act){
+    const f = state.teams.find(x=>x.activity===ui.act);
+    if(f) state.active = f.id;
+  }
+}
 const roleOf = job => (state.jobs.find(j=>j.name===job)||{}).role || 'other';
 const actOf = name => state.activities.find(a=>a.name===name) || {name,icon:'⭐'};
 const actColor = name => { const i = state.activities.findIndex(a=>a.name===name); return ACT_COLORS[(i<0?0:i)%ACT_COLORS.length]; };
@@ -429,8 +474,9 @@ function toast(msg){
   const el = $('#toast'); el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 2400);
 }
-function modal({title, html='', buttons=[{label:'ปิด'}], onOpen}){
+function modal({title, html='', buttons=[{label:'ปิด'}], onOpen, locked}){
   const ov = $('#modal');
+  ov.dataset.locked = locked ? '1' : '';
   ov.innerHTML = '<div class="dlg" role="dialog" aria-modal="true"><h3></h3><div class="dlg-body"></div><div class="dlg-foot"></div></div>';
   ov.querySelector('h3').textContent = title;
   ov.querySelector('.dlg-body').innerHTML = html;
@@ -448,9 +494,9 @@ function modal({title, html='', buttons=[{label:'ปิด'}], onOpen}){
   ov.hidden = false;
   if(onOpen) onOpen(ov);
 }
-function closeModal(){ const ov=$('#modal'); ov.hidden=true; ov.innerHTML=''; }
-$('#modal').addEventListener('mousedown', e=>{ if(e.target.id==='modal') closeModal(); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#modal').hidden) closeModal(); });
+function closeModal(){ const ov=$('#modal'); ov.hidden=true; ov.innerHTML=''; ov.dataset.locked=''; }
+$('#modal').addEventListener('mousedown', e=>{ if(e.target.id==='modal' && $('#modal').dataset.locked!=='1') closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#modal').hidden && $('#modal').dataset.locked!=='1') closeModal(); });
 function confirmBox(msg, okLabel, fn){
   modal({title:'ยืนยันการทำรายการ', html:'<p class="help" style="font-size:14px;color:var(--ink)">'+esc(msg)+'</p>',
     buttons:[{label:'ยกเลิก'},{label:okLabel,cls:'danger',fn:()=>{fn();}}]});
@@ -512,20 +558,21 @@ function locTags(id, max){
   return '<span class="locs">'+show.map(x=>locBtn(x, bad.has(x.act))).join('')
     + (L.length>show.length ? '<span class="loc more" title="'+esc(L.slice(show.length).map(x=>x.team+' · '+(x.kind==='slot'?x.party:'สำรอง')).join(', '))+'">+'+(L.length-show.length)+'</span>' : '')+'</span>';
 }
-function dupWarn(id){
-  const t = team();
+function dupWarn(id, t){
+  t = t || team();
   const o = (plc[id]||[]).filter(x=>x.act===t.activity && x.tid!==t.id);
   if(!o.length) return '';
-  return '<span class="tag dup" title="'+esc('อยู่ในทีมอื่นของกิจกรรม '+t.activity+' ด้วย: '+o.map(x=>x.team+' · '+(x.kind==='slot'?x.party:'สำรอง')).join(', '))+'">ซ้ำ</span>';
+  return '<span class="tag dup" title="'+esc('อยู่ในทีมอื่นของกิจกรรม '+t.activity+' ด้วย: '+o.map(x=>x.team+' · '+(x.kind==='slot'?x.party:'สำรอง')).join(', '))+'">ซ้ำในกิจกรรม</span>';
 }
 function warnPlaced(mid){
   const t = team(), m = byId[mid]; if(!m) return;
   const o = (placements()[mid]||[]).filter(x=>x.act===t.activity && x.tid!==t.id);
   if(o.length) toast('⚠ '+m.name+' อยู่ที่ '+o.map(x=>x.team).join(', ')+' (กิจกรรม '+t.activity+') แล้ว · ชื่อซ้ำกัน');
 }
-function flashParty(p){
+function flashParty(p, tid){
   if(p===''||p==null) return;
-  const el = document.querySelector('.party[data-p="'+p+'"]'); if(!el) return;
+  const root = tid ? document.getElementById('team-'+tid) : document;
+  const el = root && root.querySelector('.party[data-p="'+p+'"]'); if(!el) return;
   el.classList.add('flash');
   try{ el.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){}
   setTimeout(()=>el.classList.remove('flash'), 2600);
@@ -583,15 +630,29 @@ function chip(m, kind, extra, sub){
 }
 
 function renderTabs(){
-  const tabs = state.teams.map(t=>{
-    const n = t.parties.reduce((a,p)=>a+p.slots.filter(Boolean).length,0);
-    return '<button class="tab'+(t.id===state.active?' on':'')+'" data-act="tab" data-id="'+t.id+'" style="--tc:'+actColor(t.activity)+'">'
-      + '<span>'+esc(actOf(t.activity).icon)+'</span><span>'+esc(t.name)+'</span><small>'+n+'/'+t.size+'</small></button>';
+  const cnt = {};
+  state.teams.forEach(t=>{ cnt[t.activity] = (cnt[t.activity]||0)+1; });
+  const acts = state.activities.map(a=>
+    '<button class="tab'+(a.name===ui.act?' on':'')+'" data-act="acttab" data-a="'+esc(a.name)+'" style="--tc:'+actColor(a.name)+'">'
+    + '<span>'+esc(a.icon)+'</span><span>'+esc(a.name)+'</span><small>'+(cnt[a.name]||0)+' ทีม</small></button>').join('');
+  const cur = actOf(ui.act), all = ui.view==='all';
+  const list = all ? state.teams : state.teams.filter(t=>t.activity===ui.act);
+  const teams = list.map(t=>{
+    const n = t.parties.reduce((x,p)=>x+p.slots.filter(Boolean).length,0);
+    return '<button class="tab'+(t.id===state.active?' on':'')+'" data-act="tab" data-id="'+esc(t.id)+'" data-a="'+esc(t.activity)+'" style="--tc:'+actColor(t.activity)+'">'
+      + (all ? '<span>'+esc(actOf(t.activity).icon)+'</span>' : '')+'<span>'+esc(t.name)+'</span><small>'+n+'/'+t.size+'</small></button>';
   }).join('');
-  return '<nav class="tabs" aria-label="ทีม">'+tabs+'<button class="tab add" data-act="newteam">＋ ทีมใหม่</button></nav>';
+  const views = [['tab','ทีละทีม (แท็บ)'],['scroll','เลื่อนดูทั้งกิจกรรม'],['all','เลื่อนดูทุกกิจกรรม']];
+  const vb = '<div class="viewbar"><span>รูปแบบการดูทีม</span><span class="seg" role="group" aria-label="รูปแบบการดูทีม">'
+    + views.map(([v,l])=>'<button class="'+(ui.view===v?'on':'')+'" data-act="view" data-v="'+v+'">'+l+'</button>').join('')+'</span>'
+    + (ui.view!=='tab' ? '<span>กดชื่อทีมเพื่อเลื่อนไปที่ทีมนั้น</span>' : '')+'</div>';
+  return '<nav class="tabs acts" aria-label="กิจกรรม">'+acts+'<button class="tab add" data-act="acts" title="เพิ่ม/แก้ไข/ลบกิจกรรม">⚙ จัดการกิจกรรม</button></nav>'
+    + vb
+    + '<nav class="tabs teams'+(ui.view!=='tab'?' sticky':'')+'" aria-label="ทีม" style="--tc:'+actColor(ui.act)+'"><span class="tlabel">'+(all ? 'ทีมทั้งหมด' : 'ทีมใน '+esc(cur.icon+' '+cur.name))+'</span>'
+    + teams+'<button class="tab add" data-act="newteam" data-a="'+esc(ui.act)+'">＋ ทีมใหม่</button></nav>';
 }
 
-function partyHtml(pt, p, byId){
+function partyHtml(pt, p, byId, t){
   const ms = pt.slots.map(id=>id?byId[id]:null);
   const head = (pt.head && pt.slots.includes(pt.head) && byId[pt.head]) ? pt.head : null;
   const n = ms.filter(Boolean).length;
@@ -599,7 +660,7 @@ function partyHtml(pt, p, byId){
   const slots = pt.slots.map((id,i)=>{
     const m = ms[i];
     const inner = m
-      ? chip(m,'slot',dupWarn(m.id)+'<button class="icon x" data-act="rmslot" data-p="'+p+'" data-i="'+i+'" title="นำออกจากปาร์ตี้" aria-label="นำออก">✕</button>')
+      ? chip(m,'slot',dupWarn(m.id, t)+'<button class="icon x" data-act="rmslot" data-p="'+p+'" data-i="'+i+'" title="นำออกจากปาร์ตี้" aria-label="นำออก">✕</button>')
       : (canEdit ? '<button class="empty" data-act="pick" data-p="'+p+'" data-i="'+i+'">＋ เลือกสมาชิก</button>' : '<div class="empty" style="display:grid;place-items:center">ว่าง</div>');
     return '<div class="slot'+(m&&m.id===head?' is-head':'')+'" data-drop="slot" data-p="'+p+'" data-i="'+i+'">'
       + (m ? '<button class="crown'+(m.id===head?' on':'')+'" data-act="head" data-p="'+p+'" data-i="'+i+'" title="'+(m.id===head?'เป็นหัวหน้าปาร์ตี้ (กดเพื่อยกเลิก)':'ตั้งเป็นหัวหน้าปาร์ตี้ (คนตั้ง)')+'" aria-label="ตั้งเป็นหัวหน้าปาร์ตี้">👑</button>' : '<span class="no" style="width:22px">'+(i+1)+'</span>')
@@ -607,13 +668,49 @@ function partyHtml(pt, p, byId){
   }).join('');
   return '<section class="party'+(n===PS?' full':'')+'" data-drop="party" data-p="'+p+'">'
     + '<header><input class="pname" data-act="pname" data-p="'+p+'" value="'+esc(pt.name)+'" maxlength="24" aria-label="ชื่อปาร์ตี้">'
+    + '<button class="icon" data-act="randp" data-p="'+p+'" title="สุ่มคนเข้าปาร์ตี้นี้" aria-label="สุ่มคนเข้าปาร์ตี้นี้">🎲</button>'
     + '<span class="dots">'+dots+'</span><span class="cnt">'+n+'/'+PS+'</span></header>'
     + '<div class="phead'+(head?'':' none')+'">'+(head?'👑 หัวหน้าปาร์ตี้ (คนตั้ง): <b>'+esc(byId[head].name)+'</b>':'ยังไม่ได้เลือกคนตั้งปาร์ตี้ · กด 👑 หน้าชื่อสมาชิก')+'</div>'
     + '<div class="slots">'+slots+'</div></section>';
 }
 
+function emptyActHtml(name){
+  const ca = actOf(name);
+  return '<div class="empty-act" style="--act:'+actColor(name)+'"><div class="act-ico">'+esc(ca.icon)+'</div><h3>ยังไม่มีทีมในกิจกรรม '+esc(name)+'</h3>'
+    + '<p class="help">'+(canEdit ? 'สร้างทีมแรกของกิจกรรมนี้เพื่อเริ่มจัดปาร์ตี้' : 'รอผู้ดูแลสร้างทีมของกิจกรรมนี้')+'</p>'
+    + (canEdit ? '<button class="btn primary" data-act="newteam" data-a="'+esc(name)+'">＋ สร้างทีมแรก</button>' : '')+'</div>';
+}
 function renderMain(){
-  const t = team();
+  let body;
+  if(ui.view==='all'){
+    body = state.activities.map((a,i)=>{
+      const ts = state.teams.filter(t=>t.activity===a.name);
+      return '<div class="actsec" id="act-'+i+'" style="--act:'+actColor(a.name)+'"><div class="acthead"><span class="act-ico">'+esc(a.icon)+'</span><h2>'+esc(a.name)+'</h2><small>'+ts.length+' ทีม</small>'
+        + '<button class="btn sm" data-act="newteam" data-a="'+esc(a.name)+'">＋ ทีมใหม่</button></div>'
+        + (ts.length ? ts.map(renderTeamBlock).join('') : emptyActHtml(a.name))+'</div>';
+    }).join('');
+  } else if(ui.view==='scroll'){
+    const ts = state.teams.filter(t=>t.activity===ui.act);
+    body = ts.length ? ts.map(renderTeamBlock).join('') : emptyActHtml(ui.act);
+  } else {
+    const t = shownTeam();
+    body = t ? renderTeamBlock(t) : emptyActHtml(ui.act);
+  }
+  $('#main').innerHTML = renderTabs() + body;
+  if(!canEdit){
+    $('#main').querySelectorAll('input').forEach(i=>{ i.readOnly = true; });
+    $('#main').querySelectorAll('select').forEach(s=>{ s.disabled = true; });
+  }
+  if(ui.scrollTo){
+    const k = String(ui.scrollTo); ui.scrollTo = null;
+    let el = null;
+    if(k==='top') el = document.querySelector('.tabs.acts');
+    else if(k.indexOf('act:')===0) el = document.getElementById('act-'+k.slice(4));
+    else if(ui.view!=='tab') el = document.getElementById('team-'+k);
+    if(el){ try{ el.scrollIntoView({block:'start'}); }catch(e){} }
+  }
+}
+function renderTeamBlock(t){
   const act = actOf(t.activity);
   const placed = [];
   t.parties.forEach(p=>p.slots.forEach(id=>id&&byId[id]&&placed.push(byId[id])));
@@ -628,34 +725,28 @@ function renderMain(){
     + '<option value="__new">＋ เพิ่มกิจกรรมใหม่…</option>';
 
   const reserveHtml = t.reserves.length
-    ? '<div class="res-list">'+t.reserves.map(id=>byId[id]?chip(byId[id],'reserve',dupWarn(id)+'<button class="icon x" data-act="rmres" data-mid="'+id+'" title="นำออกจากสำรอง" aria-label="นำออก">✕</button>'):'').join('')+'</div>'
+    ? '<div class="res-list">'+t.reserves.map(id=>byId[id]?chip(byId[id],'reserve',dupWarn(id, t)+'<button class="icon x" data-act="rmres" data-mid="'+id+'" title="นำออกจากสำรอง" aria-label="นำออก">✕</button>'):'').join('')+'</div>'
     : '<div class="res-empty">ยังไม่มีรายชื่อสำรอง · ลากสมาชิกมาวางที่นี่ได้เลย</div>';
 
-  $('#main').innerHTML =
-    renderTabs()
-    + '<div style="--act:'+actColor(t.activity)+'">'
+  return '<section class="teamsec" id="team-'+esc(t.id)+'" data-teamid="'+esc(t.id)+'" style="--act:'+actColor(t.activity)+'">'
     + '<div class="team-head"><div class="th-left"><span class="act-ico">'+esc(act.icon)+'</span>'
     + '<input class="tname" data-act="tname" value="'+esc(t.name)+'" maxlength="30" aria-label="ชื่อทีม">'
-    + '<select class="actsel" data-act="tact" aria-label="กิจกรรม">'+actOpts+'</select>'
+    + '<select class="actsel" data-act="tact" title="ย้ายทีมนี้ไปกิจกรรมอื่น" aria-label="กิจกรรม">'+actOpts+'</select>'
     + '<select class="actsel" data-act="tsize" aria-label="ขนาดทีม">'+SIZES.map(s=>'<option value="'+s+'"'+(s===t.size?' selected':'')+'>'+s+' คน ('+(s/PS)+' ปาร์ตี้)</option>').join('')+'</select></div>'
-    + '<div class="th-right"><button class="btn sm" data-act="acts">จัดการกิจกรรม</button><button class="btn sm" data-act="img">บันทึกเป็นรูป</button><button class="btn sm" data-act="export">คัดลอกรายชื่อ</button><button class="btn sm" data-act="dupteam">ทำสำเนาทีม</button><button class="btn sm" data-act="clearteam">ล้างทีม</button><button class="btn sm danger" data-act="delteam">ลบทีม</button></div></div>'
+    + '<div class="th-right"><button class="btn sm" data-act="rand" title="สุ่มสมาชิกเข้าปาร์ตี้ตามเงื่อนไขของแต่ละช่อง">🎲 สุ่มจัดปาร์ตี้</button><button class="btn sm" data-act="img">บันทึกเป็นรูป</button><button class="btn sm" data-act="export">คัดลอกรายชื่อ</button><button class="btn sm" data-act="dupteam">ทำสำเนาทีม</button><button class="btn sm" data-act="clearteam">ล้างทีม</button><button class="btn sm danger" data-act="delteam">ลบทีม</button></div></div>'
     + '<div class="stats"><div class="meter"><div class="lbl"><span>ตัวจริงในทีม</span><b>'+placed.length+' / '+total+'</b></div><div class="bar"><i style="width:'+(placed.length/total*100)+'%"></i></div></div>'
     + '<div class="rolechips">'+(roleChips||'<span class="help">ยังไม่มีสมาชิกในปาร์ตี้</span>')+warnChip+'</div></div>'
-    + '<div class="parties">'+t.parties.slice(0,t.size/PS).map((pt,p)=>partyHtml(pt,p,byId)).join('')+'</div>'
+    + '<div class="parties">'+t.parties.slice(0,t.size/PS).map((pt,p)=>partyHtml(pt,p,byId,t)).join('')+'</div>'
     + '<section class="reserve" data-drop="reserve"><header><h3>รายชื่อสำรอง <small>'+t.reserves.length+'/'+MAXRES+' · เผื่อมีคนไม่มา</small></h3>'
-    + '<button class="btn sm" data-act="pickres">＋ เพิ่มสำรอง</button></header>'+reserveHtml+'</section></div>';
-  if(!canEdit){
-    $('#main').querySelectorAll('input').forEach(i=>{ i.readOnly = true; });
-    $('#main').querySelectorAll('select').forEach(s=>{ s.disabled = true; });
-  }
+    + '<button class="btn sm" data-act="pickres">＋ เพิ่มสำรอง</button></header>'+reserveHtml+'</section></section>';
 }
 
 function renderRoster(){
-  const t = team();
+  const t = shownTeam();
   const rf = $('#rf'), opts = filterOptions(), sig = JSON.stringify(opts);
   if(rf.dataset.sig !== sig){ rf.innerHTML = opts.map(([v,l])=>'<option value="'+esc(v)+'">'+esc(l)+'</option>').join(''); rf.dataset.sig = sig; }
   rf.value = ui.filter; if(rf.value !== ui.filter){ ui.filter = 'all'; rf.value = 'all'; }
-  const inTeam = new Set(teamIds(t));
+  const inTeam = new Set(t ? teamIds(t) : []);
   const q = ui.q.trim().toLowerCase();
   const list = state.members.filter(m=>{
     if(ui.hide && inTeam.has(m.id)) return false;
@@ -670,15 +761,16 @@ function renderRoster(){
     const rc = {}; state.members.forEach(m=>{ const r = roleOf(m.job); rc[r] = (rc[r]||0)+1; });
     const chips = ROLE_ORDER.filter(r=>rc[r]).map(r=>'<span class="rc"><i style="background:'+ROLE_HEX[r]+'"></i>'+ROLES[r].l+' <b>'+rc[r]+'</b></span>').join('');
     $('#rstat').innerHTML = '<div class="rtot"><b>'+n+'</b>คนทั้งหมด</div>'
-      + '<div class="rsub">อยู่ในทีมนี้ <b>'+inN+'</b> · ยังไม่ลงทีมนี้ <b>'+(n-inN)+'</b>'+(list.length<n ? ' · แสดงอยู่ '+list.length : '')+'</div>'
+      + '<div class="rsub">'+(t ? 'อยู่ในทีมนี้ <b>'+inN+'</b> · ยังไม่ลงทีมนี้ <b>'+(n-inN)+'</b>' : 'ยังไม่ได้เลือกทีม')+''+(list.length<n ? ' · แสดงอยู่ '+list.length : '')+'</div>'
       + (chips ? '<div class="rolechips">'+chips+'</div>' : '');
   })();
   $('#roster').innerHTML = list.length
-    ? list.map(m=>chip(m,'roster',(dupK[nameKey(m.name)]>1?'<span class="tag dup" title="ชื่อนี้ซ้ำกับสมาชิกคนอื่น ควรแก้ชื่อให้ไม่ซ้ำ">ชื่อซ้ำ</span>':'')+(inTeam.has(m.id)?'<span class="tag">ในทีม</span>':'')+'<button class="icon" data-act="editmem" data-mid="'+m.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>', locTags(m.id, 3))).join('')
+    ? list.map(m=>chip(m,'roster',(dupK[nameKey(m.name)]>1?'<span class="tag dup" title="มีสมาชิกชื่อนี้มากกว่า 1 คนในรายชื่อ (ไม่เกี่ยวกับกิจกรรม) ควรแก้ชื่อให้ไม่ซ้ำ">ชื่อคนซ้ำ</span>':'')+(inTeam.has(m.id)?'<span class="tag">ในทีม</span>':'')+'<button class="icon" data-act="editmem" data-mid="'+m.id+'" title="แก้ไข" aria-label="แก้ไข">✎</button>', locTags(m.id, 3))).join('')
     : '<div class="empty-note">'+(state.members.length?'ไม่พบสมาชิกที่ตรงกับตัวกรอง':'ยังไม่มีสมาชิก · เพิ่มชื่อและอาชีพด้านบนได้เลย')+'</div>';
 }
 
 function render(){
+  normalizeView();
   byId = {}; state.members.forEach(m=>byId[m.id]=m);
   plc = placements();
   const sel = $('#jb'), keep = sel.value;
@@ -782,15 +874,18 @@ document.addEventListener('pointermove', e=>{
   drag.ghost.style.top = (e.clientY-drag.dy)+'px';
   clearOver();
   const tg = targetAt(e.clientX, e.clientY);
-  if(tg && !(tg.type==='roster' && drag.src==='roster')) tg.el.classList.add('over');
+  if(tg && validDropTarget(tg, drag.src, drag.srcEl)) tg.el.classList.add('over');
 }, {passive:false});
 document.addEventListener('pointerup', e=>{
   if(!drag) return;
   if(drag.active){
-    const tg = targetAt(e.clientX, e.clientY);
-    const mid = drag.mid, src = drag.src;
+    const tg0 = targetAt(e.clientX, e.clientY);
+    const mid = drag.mid, src = drag.src, srcEl = drag.srcEl;
+    const tg = (tg0 && validDropTarget(tg0, src, srcEl)) ? tg0 : null;
     endDrag();
-    if(tg && !(tg.type==='roster' && src==='roster')){
+    if(tg){
+      const ts = tg.el.closest('[data-teamid]');
+      if(ts && ts.dataset.teamid!==state.active) setActiveQuiet(ts.dataset.teamid);
       if(drop(mid, tg)) warnPlaced(mid);
       render();
     }
@@ -883,16 +978,21 @@ function openPick(target){
 
 /* ---------- modals: teams ---------- */
 function actSelectOptions(sel){ return state.activities.map(a=>'<option value="'+esc(a.name)+'"'+(a.name===sel?' selected':'')+'>'+esc(a.icon+' '+a.name)+'</option>').join(''); }
-function newTeamModal(){
+function nextTeamName(){
+  const used = new Set(state.teams.map(t=>String(t.name).trim().toLowerCase()));
+  for(let i=0;i<26;i++){ const n = 'ทีม '+String.fromCharCode(65+i); if(!used.has(n.toLowerCase())) return n; }
+  return 'ทีม '+(state.teams.length+1);
+}
+function newTeamModal(forAct){
   modal({title:'สร้างทีมใหม่',
-    html:'<label class="fld">ชื่อทีม<input type="text" id="nt-n" maxlength="30" value="ทีม '+String.fromCharCode(65+Math.min(state.teams.length,25))+'"></label>'
-      +'<label class="fld">กิจกรรม<select id="nt-a">'+actSelectOptions('')+'</select></label>'
+    html:'<label class="fld">ชื่อทีม<input type="text" id="nt-n" maxlength="30" value="'+nextTeamName()+'"></label>'
+      +'<label class="fld">กิจกรรม<select id="nt-a">'+actSelectOptions(forAct||ui.act)+'</select></label>'
       +'<label class="fld">ขนาดทีม<select id="nt-s">'+SIZES.map(s=>'<option value="'+s+'"'+(s===40?' selected':'')+'>'+s+' คน ('+(s/PS)+' ปาร์ตี้)</option>').join('')+'</select></label>',
     buttons:[{label:'ยกเลิก'},{label:'สร้างทีม',cls:'primary',fn:()=>{
       const n = $('#nt-n').value.trim() || 'ทีมใหม่';
       const t = newTeam(n, $('#nt-a').value);
       t.size = +$('#nt-s').value;
-      state.teams.push(t); state.active = t.id; render();
+      state.teams.push(t); selectTeam(t.id); ui.scrollTo = t.id; render();
     }}], onOpen:()=>{ const i=$('#nt-n'); i.focus(); i.select(); }});
 }
 function newActivityModal(onDone){
@@ -930,6 +1030,7 @@ function actsModal(){
         if(rename[t.activity]) t.activity = rename[t.activity];
         else { t.activity = out[0].name; moved++; }
       });
+      if(ui.act && rename[ui.act]) ui.act = rename[ui.act];
       state.activities = out; render();
       toast(moved ? 'บันทึกแล้ว · ย้าย '+moved+' ทีมไปกิจกรรม “'+out[0].name+'”' : 'บันทึกหมวดหมู่กิจกรรมแล้ว');
     }}],
@@ -961,14 +1062,18 @@ function dupTeam(){
   const t = team();
   const c = JSON.parse(JSON.stringify(t));
   c.id = uid(); c.name = t.name+' (สำเนา)';
-  state.teams.push(c); state.active = c.id; render(); toast('ทำสำเนาทีมแล้ว');
+  state.teams.push(c); selectTeam(c.id); ui.scrollTo = c.id; render(); toast('ทำสำเนาทีมแล้ว');
 }
 function delTeam(){
   const t = team();
   confirmBox('ลบ “'+t.name+'” ทั้งทีมใช่ไหม? รายชื่อสมาชิกจะยังอยู่ในรายการด้านซ้าย', 'ลบทีม', ()=>{
     state.teams = state.teams.filter(x=>x.id!==t.id);
-    if(!state.teams.length) state.teams.push(newTeam('ทีม A', state.activities[0].name));
-    state.active = state.teams[0].id; render();
+    if(!state.teams.length){ state.active = null; ui.act = t.activity; }
+    else {
+      const same = state.teams.find(x=>x.activity===t.activity);
+      if(same) selectTeam(same.id); else { state.active = state.teams[0].id; ui.act = t.activity; }
+    }
+    render();
   });
 }
 function clearTeam(){
@@ -1278,6 +1383,12 @@ async function renderTeamImage(t, o){
   return c;
 }
 // stack several teams into one tall image (falls back to 1x if the canvas would get too big)
+// follows the theme currently on screen (manual toggle first, then the system setting)
+function isDarkTheme(){
+  const t = document.documentElement.dataset.theme;
+  if(t) return t==='dark';
+  try{ return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); }catch(e){ return false; }
+}
 async function renderTeamsImage(teams, o){
   const render = async scale=>{
     const cs = [];
@@ -1296,9 +1407,170 @@ async function renderTeamsImage(teams, o){
   cs.forEach(c=>{ ctx.drawImage(c, Math.round((d.w-c.width)/2), y); y += c.height; });
   return out;
 }
+/* ---------- random party fill (per-slot conditions: jobs and/or role types) ---------- */
+const RAND_KEY = 'ro-tnw-rand';
+function defaultRandRules(){ return {replace:false, slots:Array.from({length:PS},()=>({roles:[], jobs:[]}))}; }
+function loadRandRules(){
+  const d = defaultRandRules();
+  try{
+    const r = JSON.parse(localStorage.getItem(RAND_KEY));
+    if(r && Array.isArray(r.slots)){
+      d.replace = !!r.replace;
+      for(let i=0;i<PS;i++){
+        const x = r.slots[i] || {};
+        d.slots[i] = {roles:(x.roles||[]).filter(k=>ROLES[k]), jobs:(x.jobs||[]).filter(j=>typeof j==='string')};
+      }
+    }
+  }catch(e){}
+  return d;
+}
+function saveRandRules(r){ try{ localStorage.setItem(RAND_KEY, JSON.stringify(r)); }catch(e){} }
+function matchRule(rule, m){
+  if(!rule.roles.length && !rule.jobs.length) return true;           // no condition = anyone
+  return rule.roles.includes(roleOf(m.job)) || rule.jobs.includes(m.job);   // several conditions = any of them
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); const x = a[i]; a[i] = a[j]; a[j] = x; }
+  return a;
+}
+// members that are not yet in ANY team of this activity (optionally ignoring the slots that are about to be cleared)
+function randPool(t, parties, replace){
+  const sel = new Set(parties);
+  return state.members.filter(m=>!(plc[m.id]||[]).some(x=>
+    x.act===t.activity && !(replace && x.tid===t.id && x.kind==='slot' && sel.has(x.p))));
+}
+// random assignment that fills as many slots as the conditions allow (random maximum matching), nobody used twice
+function runRandom(t, rules, parties){
+  const pool = randPool(t, parties, rules.replace);
+  const slots = [];
+  parties.forEach(p=>{
+    for(let i=0;i<PS;i++){
+      if(!rules.replace && t.parties[p].slots[i]) continue;
+      slots.push({p, i, cands:pool.filter(m=>matchRule(rules.slots[i], m))});
+    }
+  });
+  shuffle(slots); slots.forEach(s=>shuffle(s.cands));
+  const owner = {}, got = new Array(slots.length).fill(null);
+  const tryFill = (si, seen)=>{
+    for(const m of slots[si].cands){
+      if(seen.has(m.id)) continue;
+      seen.add(m.id);
+      if(owner[m.id]===undefined || tryFill(owner[m.id], seen)){ owner[m.id] = si; got[si] = m; return true; }
+    }
+    return false;
+  };
+  slots.forEach((s,si)=>{ tryFill(si, new Set()); });
+  return {pool, slots:slots.map((s,k)=>({p:s.p, i:s.i, m:got[k]}))};
+}
+function randModal(preParty){
+  const t = team(), nP = t.size/PS, rules = loadRandRules();
+  if(preParty!=null && !isNaN(preParty)){ /* open from a party's own dice button */ }
+  const picked = new Set();
+  t.parties.slice(0,nP).forEach((pt,p)=>{
+    if(preParty!=null && !isNaN(preParty)){ if(p===preParty) picked.add(p); }
+    else if(pt.slots.some(id=>!id)) picked.add(p);
+  });
+  let preview = null, doRun = null;
+  const roleChip = (i,r)=>'<label class="rchip"><input type="checkbox" data-role="'+r+'"'+(rules.slots[i].roles.includes(r)?' checked':'')+'><span style="--c:'+ROLE_HEX[r]+'">'+esc(ROLES[r].l)+'</span></label>';
+  const slotRow = i=>{
+    const jobs = state.jobs.map(j=>'<label class="jchk"><input type="checkbox" data-job="'+esc(j.name)+'"'+(rules.slots[i].jobs.includes(j.name)?' checked':'')+'> '+esc(j.name)+'</label>').join('');
+    return '<div class="rslot" data-slot="'+i+'"><div class="rhead"><b>ช่อง '+(i+1)+'</b><span class="rroles">'+ROLE_ORDER.map(r=>roleChip(i,r)).join('')+'</span></div>'
+      + '<details class="rjobs"'+(rules.slots[i].jobs.length?' open':'')+'><summary>เลือกเป็นอาชีพ <small data-jc></small></summary><div class="jobgrid">'+jobs+'</div></details></div>';
+  };
+  const ptBoxes = t.parties.slice(0,nP).map((pt,p)=>{
+    const empty = pt.slots.filter(id=>!id).length;
+    return '<label class="chk tpick" style="padding:3px 10px"><input type="checkbox" data-pt="'+p+'"'+(picked.has(p)?' checked':'')+'><span>'+esc(pt.name)+'</span><small>ว่าง '+empty+'</small></label>';
+  }).join('');
+  modal({title:'🎲 สุ่มสมาชิกเข้าปาร์ตี้ · '+t.name,
+    html:'<div class="dsec"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><b>1) เลือกปาร์ตี้ที่จะสุ่มใส่</b>'
+      +'<span style="display:flex;gap:6px"><button class="btn sm" id="rd-all">เลือกทั้งหมด</button><button class="btn sm" id="rd-none">ล้าง</button></span></div>'
+      +'<div class="ptlist">'+ptBoxes+'</div>'
+      +'<label class="chk"><input type="checkbox" id="rd-rep"'+(rules.replace?' checked':'')+'> สุ่มใหม่ทั้งปาร์ตี้ (เอาคนเดิมในปาร์ตี้ที่เลือกออกก่อน ไม่เลือก = เติมเฉพาะช่องว่าง)</label>'
+      +'<div class="help" id="rd-pool"></div></div>'
+      +'<div class="dsec"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><b>2) เงื่อนไขของแต่ละช่อง</b>'
+      +'<span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" id="rd-std">ชุดมาตรฐาน</button><button class="btn sm" id="rd-clr">ล้างเงื่อนไข</button></span></div>'
+      +'<p class="help">เลือกได้หลายเงื่อนไขต่อช่อง (ทั้งประเภทอาชีพและอาชีพเฉพาะ) ตรงข้อใดข้อหนึ่งก็ได้ ถ้าไม่เลือกอะไรเลย = ใครก็ได้ · จะสุ่มเฉพาะคนที่ยังไม่มีชื่อในกิจกรรม '+esc(t.activity)+' เท่านั้น</p>'
+      +[0,1,2,3,4].map(slotRow).join('')+'</div>'
+      +'<div class="dsec"><b>3) ผลการสุ่ม (ตัวอย่างก่อนใช้จริง)</b><div id="rd-prev" class="help">กด “สุ่ม” เพื่อดูตัวอย่าง ยังไม่ถูกใช้จนกว่าจะกด “ใช้ผลนี้”</div></div>',
+    buttons:[
+      {label:'ปิด'},
+      {label:'🎲 สุ่ม / สุ่มใหม่', fn:()=>{ if(doRun) doRun(); return false; }},
+      {label:'ใช้ผลนี้', cls:'primary', fn:()=>{
+        if(!preview || !preview.slots.some(x=>x.m)){ toast('ยังไม่มีผลสุ่มที่ใช้ได้ · กด “สุ่ม” ก่อน'); return false; }
+        if(preview.replace) preview.parties.forEach(p=>{ t.parties[p].slots = Array(PS).fill(null); t.parties[p].head = null; });
+        let n = 0;
+        preview.slots.forEach(x=>{ if(x.m){ t.parties[x.p].slots[x.i] = x.m.id; n++; } });
+        render(); toast('สุ่มจัดสมาชิกเข้าปาร์ตี้แล้ว '+n+' คน');
+      }}
+    ],
+    onOpen:(ov)=>{
+      ov.querySelector('.dlg').style.width = 'min(820px,100%)';
+      const applyBtn = ov.querySelectorAll('.dlg-foot button')[2];
+      const sel = ()=>[...ov.querySelectorAll('[data-pt]')].filter(i=>i.checked).map(i=>+i.dataset.pt);
+      const collect = ()=>{
+        ov.querySelectorAll('.rslot').forEach(row=>{
+          const i = +row.dataset.slot;
+          rules.slots[i].roles = [...row.querySelectorAll('[data-role]')].filter(c=>c.checked).map(c=>c.dataset.role);
+          rules.slots[i].jobs = [...row.querySelectorAll('[data-job]')].filter(c=>c.checked).map(c=>c.dataset.job);
+          const jc = row.querySelector('[data-jc]'); if(jc) jc.textContent = rules.slots[i].jobs.length ? '· '+rules.slots[i].jobs.length+' อาชีพ' : '';
+        });
+        rules.replace = $('#rd-rep').checked;
+        saveRandRules(rules);
+      };
+      const poolInfo = ()=>{
+        const ps = sel(), pool = randPool(t, ps, $('#rd-rep').checked), rc = {};
+        pool.forEach(m=>{ const r = roleOf(m.job); rc[r] = (rc[r]||0)+1; });
+        $('#rd-pool').innerHTML = 'คนที่ยังไม่มีชื่อในกิจกรรม <b>'+esc(t.activity)+'</b>: <b>'+pool.length+'</b> จาก '+state.members.length+' คน'
+          + (pool.length ? ' · '+ROLE_ORDER.filter(r=>rc[r]).map(r=>ROLES[r].l+' '+rc[r]).join(' · ') : '');
+      };
+      const invalidate = ()=>{
+        preview = null; applyBtn.disabled = true;
+        $('#rd-prev').className = 'help'; $('#rd-prev').textContent = 'กด “สุ่ม” เพื่อดูตัวอย่าง ยังไม่ถูกใช้จนกว่าจะกด “ใช้ผลนี้”';
+      };
+      doRun = ()=>{
+        collect();
+        const ps = sel();
+        if(!ps.length){ toast('เลือกปาร์ตี้อย่างน้อย 1 ปาร์ตี้ก่อน'); return; }
+        const res = runRandom(t, rules, ps);
+        if(!res.slots.length){ toast('ปาร์ตี้ที่เลือกไม่มีช่องว่าง · ติ๊ก “สุ่มใหม่ทั้งปาร์ตี้” หรือเลือกปาร์ตี้อื่น'); return; }
+        preview = {parties:ps, replace:rules.replace, slots:res.slots};
+        const filled = res.slots.filter(x=>x.m).length;
+        const cards = ps.map(p=>{
+          const pt = t.parties[p];
+          const rows = [0,1,2,3,4].map(i=>{
+            const x = res.slots.find(y=>y.p===p && y.i===i);
+            if(!x){ const cur = pt.slots[i] && byId[pt.slots[i]]; return '<div class="rrow dim">'+(i+1)+'. '+(cur ? esc(cur.name)+' (คนเดิม)' : '—')+'</div>'; }
+            return x.m ? '<div class="rrow">'+(i+1)+'. <b>'+esc(x.m.name)+'</b> <small>'+esc(x.m.job)+'</small></div>'
+                       : '<div class="rrow none">'+(i+1)+'. ไม่มีคนตรงเงื่อนไข</div>';
+          }).join('');
+          return '<div class="rpcard"><b>'+esc(pt.name)+'</b>'+rows+'</div>';
+        }).join('');
+        $('#rd-prev').className = '';
+        $('#rd-prev').innerHTML = '<p class="help" style="margin:0 0 6px">สุ่มได้ <b>'+filled+'</b> จาก '+res.slots.length+' ช่อง'+(filled<res.slots.length?' · ช่องที่ว่างเพราะไม่มีคนตรงเงื่อนไข หรือคนหมดแล้ว':'')+'</p><div class="rprev">'+cards+'</div>';
+        applyBtn.disabled = filled===0;
+      };
+      ov.addEventListener('change', e=>{
+        if(e.target.closest('.rslot') || e.target.id==='rd-rep' || e.target.dataset.pt!==undefined){ collect(); poolInfo(); invalidate(); }
+      });
+      $('#rd-all').onclick = ()=>{ ov.querySelectorAll('[data-pt]').forEach(i=>{ i.checked = true; }); poolInfo(); invalidate(); };
+      $('#rd-none').onclick = ()=>{ ov.querySelectorAll('[data-pt]').forEach(i=>{ i.checked = false; }); poolInfo(); invalidate(); };
+      const setRules = fn=>{
+        ov.querySelectorAll('.rslot').forEach(row=>{
+          const i = +row.dataset.slot, r = fn(i);
+          row.querySelectorAll('[data-role]').forEach(c=>{ c.checked = r.roles.includes(c.dataset.role); });
+          row.querySelectorAll('[data-job]').forEach(c=>{ c.checked = r.jobs.includes(c.dataset.job); });
+        });
+        collect(); poolInfo(); invalidate();
+      };
+      $('#rd-std').onclick = ()=>setRules(i=>({roles:[['tank'],['heal'],['dps'],['dps'],['sup']][i], jobs:[]}));
+      $('#rd-clr').onclick = ()=>setRules(()=>({roles:[], jobs:[]}));
+      collect(); poolInfo(); invalidate();
+    }});
+}
+
 function exportImage(){
   const cur = {blob:null, url:null, name:'team', busy:false, again:false};
-  const cT = team();
+  const cT = shownTeam() || team();
   const rows = state.teams.map(t=>{
     const n = t.parties.reduce((a,p)=>a+p.slots.filter(Boolean).length, 0);
     return '<label class="chk tpick"><input type="checkbox" data-tid="'+esc(t.id)+'"'+(t.id===cT.id?' checked':'')+'><span>'+esc(actOf(t.activity).icon)+' '+esc(t.name)+'</span>'
@@ -1334,7 +1606,7 @@ function exportImage(){
     html:'<div class="dsec"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><b>เลือกทีมที่จะรวมในรูปเดียว</b>'
       +'<span style="display:flex;gap:6px"><button class="btn sm" id="im-all">เลือกทั้งหมด</button><button class="btn sm" id="im-none">ล้าง</button></span></div>'
       +'<div class="tlist">'+rows+'</div></div>'
-      +'<div class="row" style="flex-wrap:wrap;gap:6px 18px"><label class="chk"><input type="checkbox" id="im-res"'+(cT.reserves.length?' checked':'')+'> แสดงรายชื่อสำรอง</label><label class="chk"><input type="checkbox" id="im-empty"> ซ่อนปาร์ตี้ที่ยังว่างทั้งหมด</label><label class="chk"><input type="checkbox" id="im-dark"> พื้นหลังมืด</label></div>'
+      +'<div class="row" style="flex-wrap:wrap;gap:6px 18px"><label class="chk"><input type="checkbox" id="im-res"'+(cT.reserves.length?' checked':'')+'> แสดงรายชื่อสำรอง</label><label class="chk"><input type="checkbox" id="im-empty"> ซ่อนปาร์ตี้ที่ยังว่างทั้งหมด</label><label class="chk"><input type="checkbox" id="im-dark"'+(isDarkTheme()?' checked':'')+'> พื้นหลังมืด</label></div>'
       +'<div id="im-box" style="text-align:center;color:var(--muted)">กำลังสร้างรูป…</div>',
     buttons:[
       {label:'ปิด'},
@@ -1516,13 +1788,66 @@ function mergeIncoming(inc){
   });
   return added;
 }
+// synchronous download that tells us whether the browser accepted it (used before destructive actions)
+function downloadFile(filename, data){
+  try{
+    const type = /\.xlsx$/i.test(filename) ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/json';
+    const blob = data instanceof Blob ? data : new Blob([data], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    return true;
+  }catch(e){ return false; }
+}
+const CLEAR_WORD = 'ล้างข้อมูล';
+function clearDataModal(){
+  if(!canEdit) return;
+  const nM = state.members.length, nT = state.teams.length;
+  const chk = (id, on, text)=>'<label class="chk" style="color:var(--ink)"><input type="checkbox" id="'+id+'"'+(on?' checked':'')+'> '+text+'</label>';
+  modal({title:'ล้างข้อมูลสมาชิกและทีมทั้งหมด',
+    html:'<p class="help" style="font-size:14px;color:var(--ink)">จะลบ <b>'+nM+' สมาชิก</b> และ <b>'+nT+' ทีม</b> (รวมปาร์ตี้ รายชื่อสำรอง หัวหน้า และตำแหน่งทั้งหมด) ออกจากฐานข้อมูลกลางและเครื่องนี้ ทุกคนที่เปิดหน้านี้จะเห็นหน้าว่าง การล้างย้อนกลับไม่ได้ ยกเว้นมีไฟล์สำรอง</p>'
+      + chk('cl-bk', true, 'ดาวน์โหลดไฟล์สำรอง (JSON) ก่อนล้าง · แนะนำให้เปิดไว้')
+      + chk('cl-prev', true, 'ลบสำเนาสำรองเก่าที่ค้างในเครื่องนี้ด้วย')
+      + chk('cl-cfg', false, 'คืนอาชีพ สี ไอคอน และกิจกรรมเป็นค่าเริ่มต้นด้วย (ไม่ติ๊ก = เก็บของที่ตั้งไว้)')
+      + '<label class="fld">พิมพ์คำว่า <b>'+CLEAR_WORD+'</b> เพื่อยืนยัน<input type="text" id="cl-t" autocomplete="off"></label>',
+    buttons:[
+      {label:'ยกเลิก'},
+      {label:'ล้างข้อมูล', cls:'danger', fn:()=>{
+        if(!canEdit) return;
+        if($('#cl-t').value.trim()!==CLEAR_WORD){ toast('พิมพ์คำว่า “'+CLEAR_WORD+'” ให้ตรงก่อน'); return false; }
+        if($('#cl-bk').checked && !downloadFile('ro-party-สำรองก่อนล้าง-'+stamp()+'.json', exportJSON())){
+          toast('ดาวน์โหลดไฟล์สำรองไม่สำเร็จ · ยังไม่ได้ล้างข้อมูล');
+          return false;
+        }
+        const resetCfg = $('#cl-cfg').checked, dropPrev = $('#cl-prev').checked;
+        state.members = []; state.teams = []; state.active = null;
+        if(resetCfg){ const b = blankState(); state.jobs = b.jobs; state.activities = b.activities; state.jv = b.jv; }
+        ui.q = ''; ui.hide = false; ui.filter = 'all'; ui.last = {};
+        $('#q').value = ''; $('#hide').checked = false;
+        if(dropPrev){ try{ localStorage.removeItem(PREV_KEY); }catch(e){} }
+        render();
+        toast('ล้างข้อมูลแล้ว · '+nM+' สมาชิก '+nT+' ทีม');
+      }}
+    ],
+    onOpen:(ov)=>{
+      const go = ov.querySelectorAll('.dlg-foot button')[1];
+      go.disabled = true;
+      const t = $('#cl-t');
+      t.addEventListener('input', ()=>{ go.disabled = t.value.trim()!==CLEAR_WORD; });
+      t.focus();
+    }});
+}
 function dataModal(){
   modal({title:'ส่งออก / นำเข้าข้อมูล',
     html:'<p class="help">ข้อมูลบันทึกในฐานข้อมูลกลางอัตโนมัติ ทุกเครื่องเห็นตรงกัน การนำเข้าจะ <b>เพิ่มเข้ากับข้อมูลเดิม</b> ไม่ลบและไม่ทับของเดิม</p>'
       +'<div class="dsec"><b>ส่งออก</b><div class="row" style="flex-wrap:wrap"><button class="btn sm" id="dx-json">ดาวน์โหลด JSON</button><button class="btn sm" id="dx-xlsx">ดาวน์โหลด Excel (.xlsx)</button><button class="btn sm" id="dx-copy">คัดลอก JSON</button></div><p class="help">JSON เก็บข้อมูลครบทุกอย่างรวมไอคอนอาชีพ · Excel มีชีต สมาชิก, ทีม, การจัดทีม, อาชีพ, กิจกรรม เปิดดูและแก้ไขได้</p></div>'
-      +'<div class="dsec adm-only"><b>นำเข้า</b><input type="file" id="di-file" accept=".json,.xlsx,.xls,application/json"><textarea id="di-text" rows="5" spellcheck="false" placeholder="หรือวางข้อความ JSON ที่นี่"></textarea><div class="row"><button class="btn primary sm" id="di-go">นำเข้า (เพิ่มเข้ากับข้อมูลเดิม)</button></div><p class="help">ทีมที่นำเข้าจะถูกเพิ่มเป็นทีมใหม่ ถ้าชื่อซ้ำกับทีมเดิมจะต่อท้ายว่า (นำเข้า) สมาชิกที่ชื่อและอาชีพตรงกับที่มีอยู่แล้วจะไม่ถูกเพิ่มซ้ำ</p></div>',
+      +'<div class="dsec adm-only"><b>นำเข้า</b><input type="file" id="di-file" accept=".json,.xlsx,.xls,application/json"><textarea id="di-text" rows="5" spellcheck="false" placeholder="หรือวางข้อความ JSON ที่นี่"></textarea><div class="row"><button class="btn primary sm" id="di-go">นำเข้า (เพิ่มเข้ากับข้อมูลเดิม)</button><button class="btn sm" id="di-prev" hidden>นำเข้าจากสำเนาสำรองเดิมในเครื่องนี้</button></div><p class="help">ทีมที่นำเข้าจะถูกเพิ่มเป็นทีมใหม่ ถ้าชื่อซ้ำกับทีมเดิมจะต่อท้ายว่า (นำเข้า) สมาชิกที่ชื่อและอาชีพตรงกับที่มีอยู่แล้วจะไม่ถูกเพิ่มซ้ำ</p></div>'
+      +'<div class="dsec adm-only"><b>ล้างข้อมูล</b><p class="help">ลบสมาชิกและทีมทั้งหมดออกจากฐานข้อมูลกลางและเครื่องนี้ (ผู้ดูแลเท่านั้น) มีขั้นยืนยัน และดาวน์โหลดไฟล์สำรองให้ก่อนล้าง</p><div class="row"><button class="btn danger sm" id="dx-clear">ล้างสมาชิกและทีมทั้งหมด…</button></div></div>',
     buttons:[{label:'ปิด'}],
     onOpen:()=>{
+      $('#dx-clear').onclick = ()=>{ if(canEdit) clearDataModal(); };
       $('#dx-json').onclick = ()=>saveFile('ro-party-'+stamp()+'.json', exportJSON());
       $('#dx-xlsx').onclick = ()=>{
         if(!window.XLSX){ toast('โหลดตัวสร้าง Excel ไม่สำเร็จ · ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่'); return; }
@@ -1533,6 +1858,18 @@ function dataModal(){
         ta.value = exportJSON(); ta.style.cssText = 'position:fixed;opacity:0;top:0';
         document.body.appendChild(ta); copyText(ta); ta.remove();
       };
+      let prevRaw = null;
+      try{ prevRaw = localStorage.getItem(PREV_KEY); }catch(e){}
+      if(prevRaw){
+        const pb = $('#di-prev'); pb.hidden = false;
+        pb.onclick = ()=>{
+          try{
+            const a = mergeIncoming(normalizeJSON(JSON.parse(prevRaw)));
+            render(); closeModal();
+            toast('นำเข้าจากสำเนาสำรองแล้ว · สมาชิกใหม่ '+a.members+' · ทีมใหม่ '+a.teams);
+          }catch(e){ toast('อ่านสำเนาสำรองไม่ได้'); }
+        };
+      }
       $('#di-go').onclick = async ()=>{
         try{
           const f = $('#di-file').files[0], txt = $('#di-text').value.trim();
@@ -1556,13 +1893,33 @@ function dataModal(){
 document.addEventListener('click', e=>{
   const b = e.target.closest('button[data-act]'); if(!b) return;
   const d = b.dataset, t = team();
-  if(!canEdit && !['tab','export','img','theme','data','login','logout','goto','check'].includes(d.act)) return;
+  if(!canEdit && !['tab','acttab','view','export','img','theme','data','login','logout','goto','check'].includes(d.act)) return;
   switch(d.act){
     case 'addmem': addMember(); break;
     case 'bulk': bulkAdd(); break;
     case 'editmem': editMember(d.mid); break;
-    case 'tab': state.active = d.id; render(); break;
-    case 'newteam': newTeamModal(); break;
+    case 'tab':
+      if(ui.view==='tab'){ selectTeam(d.id); render(); }
+      else {
+        setActiveQuiet(d.id);
+        const el = document.getElementById('team-'+d.id);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+      break;
+    case 'acttab': {
+      ui.act = d.a;
+      const keep = state.teams.find(x=>x.id===ui.last[d.a] && x.activity===d.a) || state.teams.find(x=>x.activity===d.a);
+      if(keep) selectTeam(keep.id);
+      if(ui.view==='all') ui.scrollTo = 'act:'+state.activities.findIndex(a=>a.name===d.a);
+      else if(ui.view==='scroll') ui.scrollTo = 'top';
+      render(); break;
+    }
+    case 'view':
+      ui.view = d.v;
+      try{ localStorage.setItem('ro-tnw-view', d.v); }catch(e){}
+      ui.scrollTo = state.active;
+      render(); break;
+    case 'newteam': newTeamModal(d.a); break;
     case 'acts': actsModal(); break;
     case 'dupteam': dupTeam(); break;
     case 'delteam': delTeam(); break;
@@ -1579,9 +1936,11 @@ document.addEventListener('click', e=>{
       if(t.reserves.length>=MAXRES){ toast('รายชื่อสำรองเต็มแล้ว (สูงสุด '+MAXRES+' คน)'); break; }
       openPick({type:'reserve'}); break;
     case 'goto':
-      if(state.teams.some(x=>x.id===d.tid)){ closeModal(); state.active = d.tid; render(); flashParty(d.p); }
+      if(state.teams.some(x=>x.id===d.tid)){ closeModal(); selectTeam(d.tid); render(); flashParty(d.p, d.tid); }
       break;
     case 'check': checkModal(d.f); break;
+    case 'rand': randModal(); break;
+    case 'randp': randModal(+d.p); break;
     case 'img': exportImage(); break;
     case 'login': loginModal(); break;
     case 'logout': doLogout(); break;
@@ -1604,8 +1963,8 @@ document.addEventListener('change', e=>{
   else if(a==='tname'){ t.name = el.value.trim() || t.name; render(); }
   else if(a==='tsize'){ resizeTeam(t, +el.value); render(); }
   else if(a==='tact'){
-    if(el.value==='__new') newActivityModal(n=>{ if(n) t.activity = n; render(); });
-    else { t.activity = el.value; render(); }
+    if(el.value==='__new') newActivityModal(n=>{ if(n){ t.activity = n; selectTeam(t.id); } render(); });
+    else { t.activity = el.value; selectTeam(t.id); render(); }
   }
 });
 document.addEventListener('keydown', e=>{
@@ -1617,19 +1976,20 @@ $('#hide').addEventListener('change', e=>{ ui.hide = e.target.checked; renderRos
 $('#rf').addEventListener('change', e=>{ ui.filter = e.target.value; renderRoster(); });
 
 /* ---------- shared database (Firebase) + admin login ---------- */
-const cloud = {mode:'loading', fs:null, auth:null, user:null, ready:false, sid:uid(), lastCore:'', lastIcons:'{}', remoteExists:false, pendingCore:null, pendingIcons:null, saveTimer:null, applyTimer:null, saving:false};
+const cloud = {mode:'loading', fs:null, auth:null, user:null, ready:false, sid:uid(), lastCore:'', lastIcons:'{}', remoteExists:false, pendingCore:null, pendingIcons:null, saveTimer:null, applyTimer:null, saving:false, hold:false};
 const MERGED_KEY = 'ro-tnw-local-merged';
+const PREV_KEY = 'ro-tnw-party-prev';   // one safety copy kept when the admin chooses to start fresh
 const hhmm = ()=>new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
 const withTimeout = (p,ms)=>Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej({code:'timeout'}),ms))]);
 
 function blankState(){
-  return sanitize({members:[], teams:[newTeam('ทีม A','Guild League')], jobs:null, activities:null});
+  return sanitize({members:[], teams:[], jobs:null, activities:null});
 }
 function loadLocalSaved(){
   try{
     const raw = localStorage.getItem(KEY); if(!raw) return null;
     const s = JSON.parse(raw);
-    if(s && Array.isArray(s.members) && Array.isArray(s.teams) && s.teams.length) return sanitize(s);
+    if(s && Array.isArray(s.members) && Array.isArray(s.teams)) return sanitize(s);
   }catch(e){}
   return null;
 }
@@ -1693,7 +2053,7 @@ function doLogin(){
   const e = $('#lg-e').value.trim(), p = $('#lg-p').value;
   if(!e || !p){ toast('กรอกอีเมลและรหัสผ่าน'); return false; }
   cloud.auth.signInWithEmailAndPassword(e, p)
-    .then(()=>{ closeModal(); })
+    .then(()=>{ if(document.getElementById('lg-e')) closeModal(); })
     .catch(err=>toast(authMsg(err)));
   return false;
 }
@@ -1793,12 +2153,26 @@ function offerLocalMerge(local){
     }}]});
 }
 function adminReady(){
-  const local = loadLocalSaved();
+  let local = loadLocalSaved();
+  if(local && !local.members.length && !local.teams.length) local = null;   // nothing worth keeping
   if(!cloud.remoteExists){
-    // first admin login on a brand-new database: create it from this device's data (or empty)
-    if(local) state = local;
-    setMerged();
-    toast('สร้างฐานข้อมูลกลางแล้ว');
+    if(local){
+      cloud.hold = true;   // do not save anything until the admin decides
+      modal({title:'ฐานข้อมูลกลางยังว่าง · พบข้อมูลเก่าในเครื่องนี้', locked:true,
+        html:'<p class="help" style="font-size:14px;color:var(--ink)">ฐานข้อมูลกลางยังไม่มีข้อมูล แต่เบราว์เซอร์เครื่องนี้มีข้อมูลที่เคยบันทึกไว้ ('+local.members.length+' สมาชิก, '+local.teams.length+' ทีม) ต้องการนำข้อมูลนี้ขึ้นฐานข้อมูลกลางให้ทุกคนเห็นไหม</p>'
+          +'<p class="help">ถ้าเลือก “เริ่มใหม่” ฐานข้อมูลจะเริ่มจากหน้าว่าง (มีแค่อาชีพและกิจกรรม) และสำเนาเดิมจะถูกเก็บสำรองไว้ในเครื่องนี้ 1 ชุด กู้คืนได้ที่ปุ่ม “ส่งออก/นำเข้า”</p>',
+        buttons:[
+          {label:'เริ่มใหม่ (หน้าว่าง)', fn:()=>{
+            try{ localStorage.setItem(PREV_KEY, localStorage.getItem(KEY)||''); }catch(e){}
+            cloud.hold = false; setMerged(); render();
+            toast('เริ่มจากหน้าว่างแล้ว · เก็บสำเนาเดิมไว้ในเครื่องนี้');
+          }},
+          {label:'นำข้อมูลนี้ขึ้นฐานข้อมูลกลาง', cls:'primary', fn:()=>{
+            state = local; cloud.hold = false; setMerged(); render();
+            toast('นำข้อมูลขึ้นฐานข้อมูลกลางแล้ว');
+          }}
+        ]});
+    } else { setMerged(); toast('สร้างฐานข้อมูลกลางแล้ว'); }
   } else if(local && !mergedFlag() && JSON.stringify(splitState(local).core)!==cloud.lastCore){
     offerLocalMerge(local);
   } else setMerged();
@@ -1868,6 +2242,28 @@ async function boot(){
   subscribeShared();
   cloud.auth.onAuthStateChanged(onAuth);
 }
+
+/* ---------- scroll view helpers: the team you touch becomes the current team ---------- */
+function setActiveQuiet(id){
+  const t = state.teams.find(x=>x.id===id);
+  if(!t || state.active===id) return;
+  state.active = id; ui.act = t.activity; ui.last[t.activity] = id;
+  document.querySelectorAll('.tabs.teams .tab[data-id]').forEach(b=>b.classList.toggle('on', b.dataset.id===id));
+  document.querySelectorAll('.tabs.acts .tab[data-a]').forEach(b=>b.classList.toggle('on', b.dataset.a===t.activity));
+  renderRoster();
+}
+function validDropTarget(tg, src, srcEl){
+  if(tg.type==='roster' && src==='roster') return false;
+  if(src!=='roster' && tg.type!=='roster'){
+    const ss = srcEl.closest('[data-teamid]'), ts = tg.el.closest('[data-teamid]');
+    if(ss && ts && ss.dataset.teamid!==ts.dataset.teamid) return false;   // no moving people between teams by dragging
+  }
+  return true;
+}
+['pointerdown','click','focusin'].forEach(ev=>document.addEventListener(ev, e=>{
+  const sec = e.target && e.target.closest ? e.target.closest('[data-teamid]') : null;
+  if(sec && sec.dataset.teamid!==state.active) setActiveQuiet(sec.dataset.teamid);
+}, true));
 
 /* ---------- init ---------- */
 try{ const th = localStorage.getItem(THEME_KEY); if(th==='dark'||th==='light') document.documentElement.dataset.theme = th; }catch(e){}
